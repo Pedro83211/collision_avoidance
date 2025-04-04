@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  actionlib
+  actionlib_msgs
   message_generation
   geometry_msgs
 )
@@ -49,27 +51,9 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  TaskMonitoring.msg
-  AcousticData.msg
-  Distances.msg
-  Communication.msg
-  Data.msg
-  AvoidCollision.msg
-  CommunicationLatency.msg
-  CoverageStartTime.msg
-  TravelledDistance.msg
-  ExplorationUpdate.msg
-  PartitionedPolygonInfo.msg
-  RegularObjectInformation.msg
-  PriorityObjectInformation.msg
-  BufferedData.msg
-  TransmittedData.msg
-  NED.msg
-  RPY.msg
-  AggregationModelInfo.msg
-)
+##add_message_files(
+##  FILES
+##)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -86,11 +70,11 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+#   geometry_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

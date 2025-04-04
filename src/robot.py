@@ -16,7 +16,7 @@ from shapely.geometry import Polygon
 from sensor_msgs.msg import BatteryState
 import numpy as np
 from std_srvs.srv import Empty, EmptyResponse
-from collision_avoidance.msg import TravelledDistance, CoverageStartTime
+from multi_robot_system.msg import TravelledDistance, CoverageStartTime
 
 class Robot:
 
@@ -24,15 +24,15 @@ class Robot:
         self.name = name
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
-        self.battery_topic = self.get_param('~battery_topic','/turbot1/batteries/status')
-        self.section_action = self.get_param('~section_action','/xiroi/pilot/world_section_req') 
-        self.section_result = self.get_param('~section_result','/xiroi/pilot/world_section_req/result') 
+        self.battery_topic = self.get_param('~battery_topic','/sparus_1/batteries/status')
+        self.section_action = self.get_param('~section_action','/sparus_1/pilot/world_section_req') 
+        self.section_result = self.get_param('~section_result','/sparus_1/pilot/world_section_req/result') 
         self.number_of_robots = self.get_param('number_of_robots')
-        self.navigation_depth = self.get_param('~navigation_depth',10)
+        self.navigation_depth = self.get_param('~navigation_depth',0)
         self.ned_origin_lat = self.get_param('ned_origin_lat',39.543330)
         self.ned_origin_lon = self.get_param('ned_origin_lon',2.377940)
         self.robot_ID = self.get_param('~robot_ID',0)
-        self.robot_name = self.get_param('~robot_name','turbot1')
+        self.robot_name = self.get_param('~robot_name','sparus')
         self.distance = []
         self.travelled_distance = []
         self.robots_travelled_distances = [0,0,0,0,0,0]
@@ -45,40 +45,40 @@ class Robot:
         self.robots_information = []
         for robot in range(self.number_of_robots):
             self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
-        self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  # NED frame
+        self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  #NED frame
         #Publishers
-        self.travelled_distance_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/travelled_distance',
-                                        TravelledDistance,
-                                        queue_size=1)
+        self.travelled_distance_pub = rospy.Publisher('/sparus_1/travelled_distance',
+                                         TravelledDistance,
+                                         queue_size=1)     #'/robot'+str(self.robot_ID)+'/travelled_distance' ,
 
-        # rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/state_feedback',
-        #         CaptainStateFeedback,    
-        #         self.update_section_status,
-        #         queue_size=1)
+        # rospy.Subscriber('/sparus_1/captain/state_feedback',
+        #          CaptainStateFeedback,    
+        #          self.update_section_status,
+        #          queue_size=1) #'/robot'+str(self.robot_ID)+'/captain/state_feedback',
 
-        # rospy.Subscriber('/robot'+str(self.robot_ID)+'/pilot/actionlib/result',
-        #         PilotActionResult,    
-        #         self.update_section_feedback,
-        #         queue_size=1)
+        # rospy.Subscriber('/sparus_1/pilot/actionlib/result',
+        #          PilotActionResult,    
+        #          self.update_section_feedback,
+        #          queue_size=1) # '/robot'+str(self.robot_ID)+'/pilot/actionlib/result',
 
         #Actionlib section client
-        self.section_strategy = actionlib.SimpleActionClient('/robot'+str(self.robot_ID)+'/pilot/actionlib',PilotAction)
+        self.section_strategy = actionlib.SimpleActionClient('/sparus_1/pilot/actionlib',PilotAction) #'/sparus_'+str(self.robot_ID)+'/pilot/actionlib',PilotAction
         self.section_strategy.wait_for_server()
         # Services clients
         # goto
         try:
-            rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/enable_goto', 20)
+            rospy.wait_for_service('/sparus_1/captain/enable_goto', 20) #'/robot'+str(self.robot_ID)+'/captain/enable_goto', 20
             self.goto_srv = rospy.ServiceProxy(
-                        '/robot'+str(self.robot_ID)+'/captain/enable_goto', Goto)
+                        '/sparus_1/captain/enable_goto', Goto) #'/robot'+str(self.robot_ID)+'
         except rospy.exceptions.ROSException:
             rospy.logerr('%s: error creating client to goto service',
                          self.name)
             rospy.signal_shutdown('Error creating client to goto service')
         # section
         try:
-            rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/enable_section', 20)
+            rospy.wait_for_service('/sparus_1/captain/enable_section', 20) #'/robot'+str(self.robot_ID)+'/captain/enable_section', 20
             self.section_srv = rospy.ServiceProxy(
-                        '/robot'+str(self.robot_ID)+'/captain/enable_section', Section)
+                        '/sparus_1/captain/enable_section', Section) #'/robot'+str(self.robot_ID)+'
         except rospy.exceptions.ROSException:
             rospy.logerr('%s: error creating client to Section service',
                          self.name)
@@ -92,9 +92,9 @@ class Robot:
         """ This method sets the captain back to idle """
         rospy.loginfo("Setting captain to idle state")
         try:
-            rospy.wait_for_service('/robot'+str(robot_id)+'/captain/disable_all_and_set_idle', 20)
+            rospy.wait_for_service('/sparus_1/captain/disable_all_and_set_idle', 20) #'/robot'+str(self.robot_ID)+'
             self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
-                        '/robot'+str(robot_id)+'/captain/disable_all_and_set_idle', Trigger)
+                        '/sparus_1/captain/disable_all_and_set_idle', Trigger) #'/robot'+str(self.robot_ID)+'
         except rospy.exceptions.ROSException:
             rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
                          self.name)
@@ -180,41 +180,59 @@ class Robot:
         initial_position_y = initial_point[1]
         final_position_y = final_point[1]
 
-        init_lat, init_lon, _ = self.ned.ned2geodetic([initial_position_x, initial_position_y, 0.0])
-        final_lat, final_lon, _ = self.ned.ned2geodetic([final_position_x, final_position_y, 0.0])
+        # init_lat, init_lon, _ = self.ned.ned2geodetic([initial_position_x, initial_position_y, 0.0])
+        # final_lat, final_lon, _ = self.ned.ned2geodetic([final_position_x, final_position_y, 0.0])
 
-        section_req = PilotGoal()
-        section_req.initial_latitude = init_lat
-        section_req.initial_longitude = init_lon
+        # section_req = PilotGoal()
+        # section_req.initial_latitude = init_lat
+        # section_req.initial_longitude = init_lon
+        # section_req.initial_depth = self.navigation_depth
+        # # section_req.final_yaw = self.robots_information[robot_id][2] #yaw
+        # section_req.final_latitude = final_lat
+        # section_req.final_longitude = final_lon
+        # section_req.final_depth = self.navigation_depth
+        # section_req.final_altitude = self.navigation_depth
+
+        # section_req.heave_mode = 0
+        # # uint64 DEPTH=0
+        # # uint64 ALTITUDE=1
+        # # uint64 BOTH=2
+        # section_req.tolerance_xy = self.tolerance
+        # section_req.surge_velocity = self.surge_velocity
+        # section_req.controller_type = 0
+        # # uint64 SECTION=0
+        # # uint64 ANCHOR=1
+        # # uint64 HOLONOMIC_KEEP_POSITION=2
+        # section_req.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
+        # section_req.goal.requester = rospy.get_name()
+        # section_req.timeout = 6000
+
+        # # send section goal using actionlib
+        # self.success_result = False
+        # self.is_section_actionlib_running = True
+        # self.section_strategy.send_goal(section_req)
+
+        # #  Wait for result or cancel if timed out
+        # self.section_strategy.wait_for_result()
+
+        #['initial_x', 'initial_y', 'initial_depth', 'final_x', 'final_y', 'final_depth', 'final_altitude', 'reference', 'heave_mode', 'surge_velocity', 'tolerance_xy', 'timeout', 'no_altitude_goes_up']
+
+        section_req = SectionRequest()
+        section_req.initial_x = initial_position_x
+        section_req.initial_y = initial_position_y
         section_req.initial_depth = self.navigation_depth
-        # section_req.initial_yaw = self.robots_information[robot_id][2] #yaw
-        section_req.final_latitude = final_lat
-        section_req.final_longitude = final_lon
-        section_req.final_depth = self.navigation_depth
+        section_req.final_x = final_position_x
+        section_req.final_y = final_position_y
         section_req.final_altitude = self.navigation_depth
-
+        section_req.final_depth = self.navigation_depth
+        section_req.reference = 0
         section_req.heave_mode = 0
-        # uint64 DEPTH=0
-        # uint64 ALTITUDE=1
-        # uint64 BOTH=2
-        section_req.tolerance_xy = self.tolerance
         section_req.surge_velocity = self.surge_velocity
-        section_req.controller_type = 0
-        # uint64 SECTION=0
-        # uint64 ANCHOR=1
-        # uint64 HOLONOMIC_KEEP_POSITION=2
-        section_req.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
-        section_req.goal.requester = rospy.get_name()
+        section_req.tolerance_xy = 1
         section_req.timeout = 6000
+        section_req.no_altitude_goes_up = 0
+        self.section_srv(section_req)
 
-        # send section goal using actionlib
-        self.success_result = False
-        self.is_section_actionlib_running = True
-        self.section_strategy.send_goal(section_req)
-
-        #  Wait for result or cancel if timed out
-        self.section_strategy.wait_for_result()
-            
     def set_current_section(self,current_section):
         return(current_section)
 
@@ -241,16 +259,16 @@ class Robot:
             self.section_active = True
         self.check_section_status
     
-    def update_section_feedback(self,msg):
-        if(msg.state==0):
-            self.section_succes = True
-        self.check_section_status
+    # def update_section_feedback(self,msg):
+    #     if(msg.state==0):
+    #         self.section_success = True
+    #     self.check_section_status
 
-    def check_section_status(self):
-        if(self.section_active == self.section_succes == True):
-            return(True)
-        else:
-            return(False)
+    # def check_section_status(self):
+    #     if(self.section_active == self.section_success == True):
+    #         return(True)
+    #     else:
+    #         return(False)
 
   
     def get_robot_position(self,robot_id):
