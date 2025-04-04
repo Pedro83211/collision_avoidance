@@ -16,6 +16,7 @@
       <arg name="robot_name" value="sparus_2"/>
       <arg name="enable_keyboard" value="true"/>
     </include> -->
+    
   </group>
 
   <!-- Multi-robot system -->
