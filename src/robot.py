@@ -193,6 +193,7 @@ class Robot:
         section_req.final_depth = self.navigation_depth
         section_req.final_altitude = self.navigation_depth
 
+        
         section_req.heave_mode = 0
         # uint64 DEPTH=0
         # uint64 ALTITUDE=1
