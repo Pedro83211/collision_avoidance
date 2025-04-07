@@ -180,58 +180,56 @@ class Robot:
         initial_position_y = initial_point[1]
         final_position_y = final_point[1]
 
-        # init_lat, init_lon, _ = self.ned.ned2geodetic([initial_position_x, initial_position_y, 0.0])
-        # final_lat, final_lon, _ = self.ned.ned2geodetic([final_position_x, final_position_y, 0.0])
+        init_lat, init_lon, _ = self.ned.ned2geodetic([initial_position_x, initial_position_y, 0.0])
+        final_lat, final_lon, _ = self.ned.ned2geodetic([final_position_x, final_position_y, 0.0])
 
-        # section_req = PilotGoal()
-        # section_req.initial_latitude = init_lat
-        # section_req.initial_longitude = init_lon
-        # section_req.initial_depth = self.navigation_depth
-        # # section_req.final_yaw = self.robots_information[robot_id][2] #yaw
-        # section_req.final_latitude = final_lat
-        # section_req.final_longitude = final_lon
-        # section_req.final_depth = self.navigation_depth
-        # section_req.final_altitude = self.navigation_depth
-
-        # section_req.heave_mode = 0
-        # # uint64 DEPTH=0
-        # # uint64 ALTITUDE=1
-        # # uint64 BOTH=2
-        # section_req.tolerance_xy = self.tolerance
-        # section_req.surge_velocity = self.surge_velocity
-        # section_req.controller_type = 0
-        # # uint64 SECTION=0
-        # # uint64 ANCHOR=1
-        # # uint64 HOLONOMIC_KEEP_POSITION=2
-        # section_req.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
-        # section_req.goal.requester = rospy.get_name()
-        # section_req.timeout = 6000
-
-        # # send section goal using actionlib
-        # self.success_result = False
-        # self.is_section_actionlib_running = True
-        # self.section_strategy.send_goal(section_req)
-
-        # #  Wait for result or cancel if timed out
-        # self.section_strategy.wait_for_result()
-
-        #['initial_x', 'initial_y', 'initial_depth', 'final_x', 'final_y', 'final_depth', 'final_altitude', 'reference', 'heave_mode', 'surge_velocity', 'tolerance_xy', 'timeout', 'no_altitude_goes_up']
-
-        section_req = SectionRequest()
-        section_req.initial_x = initial_position_x
-        section_req.initial_y = initial_position_y
+        section_req = PilotGoal()
+        section_req.initial_latitude = init_lat
+        section_req.initial_longitude = init_lon
         section_req.initial_depth = self.navigation_depth
-        section_req.final_x = final_position_x
-        section_req.final_y = final_position_y
-        section_req.final_altitude = self.navigation_depth
+        # section_req.final_yaw = self.robots_information[robot_id][2] #yaw
+        section_req.final_latitude = final_lat
+        section_req.final_longitude = final_lon
         section_req.final_depth = self.navigation_depth
-        section_req.reference = 0
+        section_req.final_altitude = self.navigation_depth
+
         section_req.heave_mode = 0
+        # uint64 DEPTH=0
+        # uint64 ALTITUDE=1
+        # uint64 BOTH=2
+        section_req.tolerance_xy = self.tolerance
         section_req.surge_velocity = self.surge_velocity
-        section_req.tolerance_xy = 1
+        section_req.controller_type = 0
+        # uint64 SECTION=0
+        # uint64 ANCHOR=1
+        # uint64 HOLONOMIC_KEEP_POSITION=2
+        section_req.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
+        section_req.goal.requester = rospy.get_name()
         section_req.timeout = 6000
-        section_req.no_altitude_goes_up = 0
-        self.section_srv(section_req)
+
+        # send section goal using actionlib
+        self.success_result = False
+        self.is_section_actionlib_running = True
+        self.section_strategy.send_goal(section_req)
+
+        #  Wait for result or cancel if timed out
+        self.section_strategy.wait_for_result()
+
+        # section_req = SectionRequest()
+        # section_req.initial_x = initial_position_x
+        # section_req.initial_y = initial_position_y
+        # section_req.initial_depth = self.navigation_depth
+        # section_req.final_x = final_position_x
+        # section_req.final_y = final_position_y
+        # section_req.final_altitude = self.navigation_depth
+        # section_req.final_depth = self.navigation_depth
+        # section_req.reference = 0
+        # section_req.heave_mode = 0
+        # section_req.surge_velocity = self.surge_velocity
+        # section_req.tolerance_xy = 1
+        # section_req.timeout = 6000
+        # section_req.no_altitude_goes_up = 0
+        # self.section_srv(section_req)
 
     def set_current_section(self,current_section):
         return(current_section)
