@@ -47,7 +47,7 @@ class Robot:
             self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
         self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  #NED frame
         #Publishers
-        self.travelled_distance_pub = rospy.Publisher('/sparus_1/travelled_distance',
+        self.travelled_distance_pub = rospy.Publisher('/sparus_' + str(self.robot_ID) + '/travelled_distance',
                                          TravelledDistance,
                                          queue_size=1)     #'/robot'+str(self.robot_ID)+'/travelled_distance' ,
 
@@ -62,23 +62,23 @@ class Robot:
         #          queue_size=1) # '/robot'+str(self.robot_ID)+'/pilot/actionlib/result',
 
         #Actionlib section client
-        self.section_strategy = actionlib.SimpleActionClient('/sparus_1/pilot/actionlib',PilotAction) #'/sparus_'+str(self.robot_ID)+'/pilot/actionlib',PilotAction
+        self.section_strategy = actionlib.SimpleActionClient('/sparus_' + str(self.robot_ID) + '/pilot/actionlib',PilotAction) #'/sparus_'+str(self.robot_ID)+'/pilot/actionlib',PilotAction
         self.section_strategy.wait_for_server()
         # Services clients
         # goto
         try:
-            rospy.wait_for_service('/sparus_1/captain/enable_goto', 20) #'/robot'+str(self.robot_ID)+'/captain/enable_goto', 20
+            rospy.wait_for_service('/sparus_' + str(self.robot_ID) + '/captain/enable_goto', 20) #'/robot'+str(self.robot_ID)+'/captain/enable_goto', 20
             self.goto_srv = rospy.ServiceProxy(
-                        '/sparus_1/captain/enable_goto', Goto) #'/robot'+str(self.robot_ID)+'
+                        '/sparus_' + str(self.robot_ID) + '/captain/enable_goto', Goto) #'/robot'+str(self.robot_ID)+'
         except rospy.exceptions.ROSException:
             rospy.logerr('%s: error creating client to goto service',
                          self.name)
             rospy.signal_shutdown('Error creating client to goto service')
         # section
         try:
-            rospy.wait_for_service('/sparus_1/captain/enable_section', 20) #'/robot'+str(self.robot_ID)+'/captain/enable_section', 20
+            rospy.wait_for_service('/sparus_' + str(self.robot_ID) + '/captain/enable_section', 20) #'/robot'+str(self.robot_ID)+'/captain/enable_section', 20
             self.section_srv = rospy.ServiceProxy(
-                        '/sparus_1/captain/enable_section', Section) #'/robot'+str(self.robot_ID)+'
+                        '/sparus_' + str(self.robot_ID) + '/captain/enable_section', Section) #'/robot'+str(self.robot_ID)+'
         except rospy.exceptions.ROSException:
             rospy.logerr('%s: error creating client to Section service',
                          self.name)
@@ -92,9 +92,9 @@ class Robot:
         """ This method sets the captain back to idle """
         rospy.loginfo("Setting captain to idle state")
         try:
-            rospy.wait_for_service('/sparus_1/captain/disable_all_and_set_idle', 20) #'/robot'+str(self.robot_ID)+'
+            rospy.wait_for_service('/sparus_' + str(self.robot_ID) + '/captain/disable_all_and_set_idle', 20) #'/robot'+str(self.robot_ID)+'
             self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
-                        '/sparus_1/captain/disable_all_and_set_idle', Trigger) #'/robot'+str(self.robot_ID)+'
+                        '/sparus_' + str(self.robot_ID) + '/captain/disable_all_and_set_idle', Trigger) #'/robot'+str(self.robot_ID)+'
         except rospy.exceptions.ROSException:
             rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
                          self.name)
@@ -193,7 +193,6 @@ class Robot:
         section_req.final_depth = self.navigation_depth
         section_req.final_altitude = self.navigation_depth
 
-        
         section_req.heave_mode = 0
         # uint64 DEPTH=0
         # uint64 ALTITUDE=1
@@ -212,7 +211,7 @@ class Robot:
         self.success_result = False
         self.is_section_actionlib_running = True
         self.section_strategy.send_goal(section_req)
-
+        
         #  Wait for result or cancel if timed out
         self.section_strategy.wait_for_result()
 
