@@ -12,33 +12,28 @@ class CollisionAvoidance:
         self.robot_ID = self.get_param('~robot_ID')
         self.robot_position_north=0
         self.robot_position_east=0
-        # self.gps_status = 0
-         # Get config parameters from the parameter server  
+        self.gps_status = 0
         self.robot_handler = Robot("robot")
 
         rospy.Subscriber(
             '/sparus_' + str(self.robot_ID) + '/navigator/navigation',
             NavSts,
             self.update_robot_position) 
-
-        # rospy.Subscriber(
-        #     '/sparus_1/navigator/gps',
-        #     NavSts,
-        #     self.update_robot_position)
         
         rospy.sleep(5)
         if self.robot_ID == 1 :
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), 1)
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (20, 0), self.robot_ID)
         else:
             rospy.sleep(5)
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), 1)
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-20, 0), self.robot_ID)
+
+        self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID)
+        
+
     
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
         self.robot_position_east = msg.position.east
-
-    # def update_gps_status(self, msg):
-    #     self.gps_status = msg.service
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):

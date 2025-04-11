@@ -43,6 +43,9 @@ class Robot:
         self.ns = rospy.get_namespace()
         robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
         self.robots_information = []
+        self.robot_position_north=0
+        self.robot_position_east=0
+        self.first = False
         for robot in range(self.number_of_robots):
             self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
         self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  #NED frame
@@ -50,6 +53,11 @@ class Robot:
         self.travelled_distance_pub = rospy.Publisher('/sparus_' + str(self.robot_ID) + '/travelled_distance',
                                          TravelledDistance,
                                          queue_size=1)     #'/robot'+str(self.robot_ID)+'/travelled_distance' ,
+        
+        rospy.Subscriber(
+            '/sparus_' + str(self.robot_ID) + '/navigator/navigation',
+            NavSts,
+            self.update_robot_position) 
 
         # rospy.Subscriber('/sparus_1/captain/state_feedback',
         #          CaptainStateFeedback,    
@@ -215,6 +223,8 @@ class Robot:
         #  Wait for result or cancel if timed out
         self.section_strategy.wait_for_result()
 
+        self.first = True
+
         # section_req = SectionRequest()
         # section_req.initial_x = initial_position_x
         # section_req.initial_y = initial_position_y
@@ -268,7 +278,10 @@ class Robot:
     #     else:
     #         return(False)
 
-  
+    def update_robot_position(self, msg):
+        self.robot_position_north = msg.position.north
+        self.robot_position_east = msg.position.east
+
     def get_robot_position(self,robot_id):
         return(self.robots_information[robot_id][0],self.robots_information[robot_id][1],self.robots_information[robot_id][2],self.robots_information[robot_id][11])
     
