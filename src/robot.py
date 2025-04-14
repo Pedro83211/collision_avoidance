@@ -45,7 +45,7 @@ class Robot:
         self.robots_information = []
         self.robot_position_north=0
         self.robot_position_east=0
-        self.first = False
+        self.first = True
         for robot in range(self.number_of_robots):
             self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
         self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  #NED frame
@@ -223,7 +223,7 @@ class Robot:
         #  Wait for result or cancel if timed out
         self.section_strategy.wait_for_result()
 
-        self.first = True
+        self.first = False
 
         # section_req = SectionRequest()
         # section_req.initial_x = initial_position_x
@@ -240,6 +240,13 @@ class Robot:
         # section_req.timeout = 6000
         # section_req.no_altitude_goes_up = 0
         # self.section_srv(section_req)
+
+    def check_collision(self):
+        if(self.robot_position_north < 10 and self.robot_position_north < 10 and 
+           self.robot_position_north > -10 and self.robot_position_north > -10 and 
+           not self.first):
+            if(self.robot_ID == 2):
+                self.section_strategy.cancel_all_goals()
 
     def set_current_section(self,current_section):
         return(current_section)
@@ -278,9 +285,12 @@ class Robot:
     #     else:
     #         return(False)
 
+    #
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
         self.robot_position_east = msg.position.east
+
+        self.check_collision()     
 
     def get_robot_position(self,robot_id):
         return(self.robots_information[robot_id][0],self.robots_information[robot_id][1],self.robots_information[robot_id][2],self.robots_information[robot_id][11])
