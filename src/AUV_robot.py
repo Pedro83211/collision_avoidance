@@ -14,6 +14,7 @@ class CollisionAvoidance:
         self.robot_position_east=0
         self.gps_status = 0
         self.robot_handler = Robot("robot")
+        self.last_section = False
 
         rospy.Subscriber(
             '/sparus_' + str(self.robot_ID) + '/navigator/navigation',
@@ -21,13 +22,15 @@ class CollisionAvoidance:
             self.update_robot_position) 
         
         rospy.sleep(5)
+
         if self.robot_ID == 1 :
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (20, 0), self.robot_ID)
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (20, 0), self.robot_ID, self.last_section)
         else:
             rospy.sleep(5)
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-20, 0), self.robot_ID)
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-20, 0), self.robot_ID, self.last_section)
 
-        self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID)
+        self.last_section = True
+        self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID, self.last_section)
         
 
     

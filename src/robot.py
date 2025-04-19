@@ -182,7 +182,7 @@ class Robot:
     # uint32 PRIORITY_SAFETY_HIGH  = 50
     # uint32 PRIORITY_TELEOPERATION_HIGH = 60
 
-    def send_section_strategy(self,initial_point,final_point,robot_id):
+    def send_section_strategy(self,initial_point,final_point,robot_id,last):
         initial_position_x = initial_point[0]
         final_position_x = final_point[0]
         initial_position_y = initial_point[1]
@@ -205,7 +205,10 @@ class Robot:
         # uint64 DEPTH=0
         # uint64 ALTITUDE=1
         # uint64 BOTH=2
-        section_req.tolerance_xy = self.tolerance
+
+        # If last section, null tolerance to force maintain position
+        if not last: section_req.tolerance_xy = self.tolerance
+        else: section_req.tolerance_xy = 0
         section_req.surge_velocity = self.surge_velocity
         section_req.controller_type = 0
         # uint64 SECTION=0
