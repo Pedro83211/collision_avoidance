@@ -10,7 +10,8 @@ from std_srvs.srv import Trigger, TriggerRequest
 from std_msgs.msg import Float32
 from cola2_msgs.msg import GoalDescriptor, CaptainStatus, CaptainStateFeedback
 from cola2_msgs.msg import PilotActionResult, PilotAction, PilotGoal
-from cola2_msgs.msg import  NavSts
+from cola2_msgs.msg import NavSts
+from cola2_msgs.msg import BodyVelocityReq
 from cola2_msgs.srv import Goto, GotoRequest, Section, SectionRequest
 from shapely.geometry import Polygon
 from sensor_msgs.msg import BatteryState
@@ -41,47 +42,27 @@ class Robot:
         self.battery_status = [0,0,0]
         self.first_time = True
         self.ns = rospy.get_namespace()
-        robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
+        robot_data = [0,0]
         self.robots_information = []
-        self.robot_position_north=0
-        self.robot_position_east=0
-        self.first = True
         for robot in range(self.number_of_robots):
             self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
         self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  #NED frame
-        #Publishers
-        self.travelled_distance_pub = rospy.Publisher('/sparus_' + str(self.robot_ID) + '/travelled_distance',
-                                         TravelledDistance,
+
+        # Publishers
+        self.body_velocity_req_pub = rospy.Publisher('/sparus_' + str(self.robot_ID) + '/controller/body_velocity_req',
+                                         BodyVelocityReq,
                                          queue_size=1)     #'/robot'+str(self.robot_ID)+'/travelled_distance' ,
         
+        # Subscribers
         rospy.Subscriber(
             '/sparus_' + str(self.robot_ID) + '/navigator/navigation',
             NavSts,
             self.update_robot_position) 
 
-        # rospy.Subscriber('/sparus_1/captain/state_feedback',
-        #          CaptainStateFeedback,    
-        #          self.update_section_status,
-        #          queue_size=1) #'/robot'+str(self.robot_ID)+'/captain/state_feedback',
-
-        # rospy.Subscriber('/sparus_1/pilot/actionlib/result',
-        #          PilotActionResult,    
-        #          self.update_section_feedback,
-        #          queue_size=1) # '/robot'+str(self.robot_ID)+'/pilot/actionlib/result',
-
         #Actionlib section client
         self.section_strategy = actionlib.SimpleActionClient('/sparus_' + str(self.robot_ID) + '/pilot/actionlib',PilotAction) #'/sparus_'+str(self.robot_ID)+'/pilot/actionlib',PilotAction
         self.section_strategy.wait_for_server()
         # Services clients
-        # goto
-        try:
-            rospy.wait_for_service('/sparus_' + str(self.robot_ID) + '/captain/enable_goto', 20) #'/robot'+str(self.robot_ID)+'/captain/enable_goto', 20
-            self.goto_srv = rospy.ServiceProxy(
-                        '/sparus_' + str(self.robot_ID) + '/captain/enable_goto', Goto) #'/robot'+str(self.robot_ID)+'
-        except rospy.exceptions.ROSException:
-            rospy.logerr('%s: error creating client to goto service',
-                         self.name)
-            rospy.signal_shutdown('Error creating client to goto service')
         # section
         try:
             rospy.wait_for_service('/sparus_' + str(self.robot_ID) + '/captain/enable_section', 20) #'/robot'+str(self.robot_ID)+'/captain/enable_section', 20
@@ -93,94 +74,7 @@ class Robot:
             rospy.signal_shutdown('Error creating client to Section service')
         
         # Init periodic timers
-        rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
-
-    
-    def disable_all_and_set_idle(self,robot_id):
-        """ This method sets the captain back to idle """
-        rospy.loginfo("Setting captain to idle state")
-        try:
-            rospy.wait_for_service('/sparus_' + str(self.robot_ID) + '/captain/disable_all_and_set_idle', 20) #'/robot'+str(self.robot_ID)+'
-            self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
-                        '/sparus_' + str(self.robot_ID) + '/captain/disable_all_and_set_idle', Trigger) #'/robot'+str(self.robot_ID)+'
-        except rospy.exceptions.ROSException:
-            rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
-                         self.name)
-            rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
-    
-    def update_travelled_distance(self,event):
-        if (self.first_time == True):
-            self.x_old_position = 0
-            self.y_old_position = 0
-            self.x_current_position = self.robots_information[self.robot_ID][0]
-            self.y_current_position = self.robots_information[self.robot_ID][1]
-
-            self.travelled_distance = self.update_distance()
-            self.robots_travelled_distances[self.robot_ID] = self.travelled_distance
-            self.first_time = False
-
-        else:
-            self.x_old_position = self.x_current_position
-            self.y_old_position = self.y_current_position
-            self.x_current_position = self.robots_information[self.robot_ID][0]
-            self.y_current_position = self.robots_information[self.robot_ID][1]
-            self.travelled_distance = self.update_distance()
-            self.robots_travelled_distances[self.robot_ID] = self.travelled_distance
-
-        # publish the data
-        msg = TravelledDistance()
-        msg.header.stamp = rospy.Time.now()
-        msg.travelled_distance = self.travelled_distance 
-        self.travelled_distance_pub.publish(msg)
-
-    def update_distance(self):
-        x_diff =  self.x_current_position - self.x_old_position
-        y_diff =  self.y_current_position - self.y_old_position 
-        distance =  sqrt(x_diff**2 + y_diff**2)
-        travelled_distance = self.robots_travelled_distances[self.robot_ID] + distance
-        # self.robots_travelled_distances[id] = self.robots_travelled_distances[id] + distance
-        return travelled_distance
-
-    
-    def simulation_task_time (self,init_time, final_time):
-        spend_time = (final_time - init_time)/1000000000
-        return(spend_time)
-
-    def send_goto_strategy(self, position_x, position_y,keep_position):
-        # self.disable_all_and_set_idle_srv()
-        """Goto to position x, y, z, at velocity vel."""
-        # // Define waypoint attributes
-        goto_req = GotoRequest()
-        # goto_req.altitude = 0
-        goto_req.altitude_mode = False
-        goto_req.linear_velocity.x = self.surge_velocity
-        goto_req.position.x = position_x
-        goto_req.position.y = position_y
-        goto_req.position.z = 0.0
-        goto_req.position_tolerance.x = 5
-        goto_req.position_tolerance.y = 5
-        goto_req.position_tolerance.z = 5
-        goto_req.blocking = True
-        goto_req.keep_position = keep_position
-        goto_req.disable_axis.x = False
-        goto_req.disable_axis.y = True
-        goto_req.disable_axis.z = False
-        goto_req.disable_axis.roll = True
-        goto_req.disable_axis.yaw = False
-        goto_req.disable_axis.pitch = True
-        goto_req.priority = 11
-        goto_req.reference = 0 #REFERENCE_NED=0  REFERENCE_GLOBAL=1 REFERENCE_VEHICLE=2
-        self.goto_srv(goto_req)
-        # rospy.sleep(1.0)
-
-    # PRIORITY DEFINITIONS
-    # uint32 PRIORITY_TELEOPERATION_LOW = 0
-    # uint32 PRIORITY_SAFETY_LOW = 5
-    # uint32 PRIORITY_NORMAL = 10
-    # uint32 PRIORITY_SAFETY = 30
-    # uint32 PRIORITY_TELEOPERATION = 40
-    # uint32 PRIORITY_SAFETY_HIGH  = 50
-    # uint32 PRIORITY_TELEOPERATION_HIGH = 60
+        rospy.Timer(rospy.Duration(0.05), self.check_collision)
 
     def send_section_strategy(self,initial_point,final_point,robot_id,last):
         initial_position_x = initial_point[0]
@@ -226,7 +120,7 @@ class Robot:
         #  Wait for result or cancel if timed out
         self.section_strategy.wait_for_result()
 
-        self.first = False
+        self.first_time = False
 
         # section_req = SectionRequest()
         # section_req.initial_x = initial_position_x
@@ -243,72 +137,32 @@ class Robot:
         # section_req.timeout = 6000
         # section_req.no_altitude_goes_up = 0
         # self.section_srv(section_req)
+        
+    def update_robot_position(self, msg):
+        self.robots_information[self.robot_ID - 1][0] = msg.position.north
+        self.robots_information[self.robot_ID - 1][1] = msg.position.east
 
-    def check_collision(self):
-        if(self.robot_position_north < 10 and self.robot_position_north < 10 and 
-           self.robot_position_north > -10 and self.robot_position_north > -10 and 
-           not self.first):
+    def check_collision(self, event):
+        if(self.robots_information[self.robot_ID - 1][0] < 10 and self.robots_information[self.robot_ID - 1][1] < 10 and 
+           self.robots_information[self.robot_ID - 1][0] > -10 and self.robots_information[self.robot_ID - 1][1] > -10 and 
+           not self.first_time):
             if(self.robot_ID == 2):
                 self.section_strategy.cancel_all_goals()
+                self.avoid_collision()
 
-    def set_current_section(self,current_section):
-        return(current_section)
+    #Args are: [header.seq header.stamp header.frame_id goal.requester goal.priority 
+    #           twist.linear.x twist.linear.y twist.linear.z twist.angular.x twist.angular.y twist.angular.z 
+    #           disable_axis.x  .y disable_axis.z disable_axis.roll disable_axis.pitch disable_axis.yaw]
+    def avoid_collision(self):
 
-    def get_robot_id(self):
-        return(self.robot_ID)
-    
-    def cancel_section_strategy(self,section):
-        if self.is_section_actionlib_running==True:
-            # print("------------------------" + str(section) +"-----------------------------")
-            self.section_strategy.cancel_goal()
-            section_cancelled = True
-        return(section_cancelled)
-
-    def update_battery_status(self, msg):
-        self.battery_charge = msg.charge
-        self.get_battery_status()
-    
-    def get_battery_status(self):
-        self.battery_status[self.robot_ID] =  self.battery_charge
-        return(self.battery_charge)
-         
-    def update_section_status(self,msg):
-        if(msg.state==0):
-            self.section_active = True
-        self.check_section_status
-    
-    # def update_section_feedback(self,msg):
-    #     if(msg.state==0):
-    #         self.section_success = True
-    #     self.check_section_status
-
-    # def check_section_status(self):
-    #     if(self.section_active == self.section_success == True):
-    #         return(True)
-    #     else:
-    #         return(False)
-
-    #
-    def update_robot_position(self, msg):
-        self.robot_position_north = msg.position.north
-        self.robot_position_east = msg.position.east
-
-        self.check_collision()     
-
-    def get_robot_position(self,robot_id):
-        return(self.robots_information[robot_id][0],self.robots_information[robot_id][1],self.robots_information[robot_id][2],self.robots_information[robot_id][11])
-    
-    def is_robot_alive(self, ID_robot):
-        if(ID_robot ==self.robot_ID and self.robot_alive==False):
-            return(False)
-        elif(ID_robot ==self.robot_ID and self.robot_alive==True):
-            return(True)
-
-    def get_robot_distance_to_point(self,robot_north, robot_east, point_x, point_y):
-        x_distance = robot_north - point_x
-        y_distance = robot_east - point_y
-        distance = np.sqrt(x_distance**2 + y_distance**2)
-        return(distance)
+        # publish the data
+        msg = BodyVelocityReq()
+        msg.header.stamp = rospy.Time.now()
+        msg.goal.requester = rospy.get_name()
+        msg.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
+        msg.disable_axis.y = True
+        msg.twist.angular.z = 10
+        self.body_velocity_req_pub.publish(msg)
   
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
