@@ -12,7 +12,6 @@ class CollisionAvoidance:
         self.robot_ID = self.get_param('~robot_ID')
         self.robot_position_north=0
         self.robot_position_east=0
-        self.gps_status = 0
         self.robot_handler = Robot("robot")
         self.last_section = False
 

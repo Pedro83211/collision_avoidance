@@ -54,10 +54,11 @@ class Robot:
                                          queue_size=1)     #'/robot'+str(self.robot_ID)+'/travelled_distance' ,
         
         # Subscribers
-        rospy.Subscriber(
-            '/sparus_' + str(self.robot_ID) + '/navigator/navigation',
-            NavSts,
-            self.update_robot_position) 
+        for robot in range(self.number_of_robots):
+            rospy.Subscriber(
+                '/sparus_' + str(robot + 1) + '/navigator/navigation',
+                NavSts,
+                self.update_robot_position)
 
         #Actionlib section client
         self.section_strategy = actionlib.SimpleActionClient('/sparus_' + str(self.robot_ID) + '/pilot/actionlib',PilotAction) #'/sparus_'+str(self.robot_ID)+'/pilot/actionlib',PilotAction
@@ -143,8 +144,8 @@ class Robot:
         self.robots_information[self.robot_ID - 1][1] = msg.position.east
 
     def check_collision(self, event):
-        if(self.robots_information[self.robot_ID - 1][0] < 10 and self.robots_information[self.robot_ID - 1][1] < 10 and 
-           self.robots_information[self.robot_ID - 1][0] > -10 and self.robots_information[self.robot_ID - 1][1] > -10 and 
+        if(self.robots_information[0][0] < 10 and self.robots_information[0][1] < 10 and 
+           self.robots_information[0][0] > -10 and self.robots_information[0][1] > -10 and 
            not self.first_time):
             if(self.robot_ID == 2):
                 self.section_strategy.cancel_all_goals()
