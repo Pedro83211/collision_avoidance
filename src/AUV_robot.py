@@ -28,8 +28,11 @@ class CollisionAvoidance:
             rospy.sleep(5)
             self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-20, 0), self.robot_ID, self.last_section)
 
-        self.last_section = True
         self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID, self.last_section)
+
+        if self.robot_ID == 1:
+            self.last_section = True
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (20, 0), self.robot_ID, self.last_section)
         
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
