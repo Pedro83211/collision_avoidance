@@ -13,7 +13,7 @@ from cola2_msgs.msg import PilotActionResult, PilotAction, PilotGoal
 from cola2_msgs.msg import NavSts
 from cola2_msgs.msg import BodyVelocityReq
 from cola2_msgs.srv import Goto, GotoRequest, Section, SectionRequest
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, Point
 from sensor_msgs.msg import BatteryState
 import numpy as np
 from std_srvs.srv import Empty, EmptyResponse
@@ -47,6 +47,9 @@ class Robot:
         self.collision = False
         robot_data = [0,0]
         self.robots_information = []
+        # Define the main polygon object
+        self.danger_zone_coords = ((10,20),(-10,20),(10,-20),(10,-20))
+        self.danger_zone = Polygon(self.danger_zone_coords)
         for robot in range(self.number_of_robots):
             self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
 
@@ -140,8 +143,7 @@ class Robot:
 
 
     def check_collision(self, event):
-        if(self.robots_information[0][0] < 10 and
-           self.robots_information[0][0] > -10):
+        if(self.danger_zone.contains(Point(self.robots_information[0]))):
             if(self.robot_ID == 2 and not self.first_time):
                 self.collision = True
                 self.section_strategy.cancel_all_goals()
