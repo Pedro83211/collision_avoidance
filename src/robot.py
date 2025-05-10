@@ -34,6 +34,7 @@ class Robot:
         self.ned_origin_lon = self.get_param('ned_origin_lon',2.377940)
         self.robot_ID = self.get_param('~robot_ID',0)
         self.robot_name = self.get_param('~robot_name','sparus')
+        self.collision_algorithm = self.get_param('collision_algorithm', "stop&wait")
         self.distance = []
         self.travelled_distance = []
         self.robots_travelled_distances = [0,0,0,0,0,0]
@@ -49,7 +50,6 @@ class Robot:
         self.robots_information = []
         # Define the main polygon object
         self.danger_zone_coords = ((10,20),(-10,20),(10,-20),(10,-20))
-        self.danger_zone = Polygon(self.danger_zone_coords)
         for robot in range(self.number_of_robots):
             self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
 
@@ -135,20 +135,27 @@ class Robot:
         # self.section_srv(section_req)
         
     def update_robot_position(self, msg):
-        frame_id = msg.header.frame_id
-        if frame_id == "sparus_1/base_link":
-            self.robots_information[0] = (msg.position.north, msg.position.east)
-        elif frame_id == "sparus_2/base_link":
-            self.robots_information[1] = (msg.position.north, msg.position.east)
+        try:
+            frame_id = int(msg.header.frame_id[7])
+        except:
+            pass
+        else:
+            self.robots_information[frame_id - 1] = (msg.position.north, msg.position.east)
 
 
     def check_collision(self, event):
-        if(self.danger_zone.contains(Point(self.robots_information[0]))):
+        # Sets danger zone based on the algorithm used
+        if self.collision_algorithm == "stop&wait":
+            self.danger_zone = Polygon(self.danger_zone_coords)
+        elif self.collision_algorithm == "PF":
+            self.danger_zone = Point(self.robots_information[1]).buffer(2.0)
+            
+        if self.danger_zone.contains(Point(self.robots_information[0])):
             if(self.robot_ID == 2 and not self.first_time):
                 self.collision = True
                 self.section_strategy.cancel_all_goals()
                 self.avoid_collision()
-        elif self.collision:
+        elif (self.collision and self.robot_ID == 2):
             self.collision = False
             self.section_strategy.send_goal(self.section_req)
             self.section_strategy.wait_for_result()
@@ -159,14 +166,16 @@ class Robot:
     #           disable_axis.x  .y disable_axis.z disable_axis.roll disable_axis.pitch disable_axis.yaw]
     def avoid_collision(self):
 
+        print("Within critical distance")
+
         # publish the data
-        msg = BodyVelocityReq()
-        msg.header.stamp = rospy.Time.now()
-        msg.goal.requester = rospy.get_name()
-        msg.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
-        msg.disable_axis.y = True
-        msg.twist.angular.z = 10
-        self.body_velocity_req_pub.publish(msg)
+        # msg = BodyVelocityReq()
+        # msg.header.stamp = rospy.Time.now()
+        # msg.goal.requester = rospy.get_name()
+        # msg.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
+        # msg.disable_axis.y = True
+        # msg.twist.angular.z = 10
+        # self.body_velocity_req_pub.publish(msg)
   
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
