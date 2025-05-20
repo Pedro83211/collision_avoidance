@@ -9,4 +9,4 @@ ned_origin_lat: 39.543330
 ned_origin_lon: 2.377940
 
 # Collision avoidance algorith to use {stop&wait, PF}
-collision_algorithm: "PF"
+collision_algorithm: 'PF'

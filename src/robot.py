@@ -5,6 +5,7 @@ import roslib
 import actionlib
 from cola2.utils.ned import NED
 import matplotlib.pyplot as plt
+import math
 from math import *
 from std_srvs.srv import Trigger, TriggerRequest
 from std_msgs.msg import Float32
@@ -12,12 +13,8 @@ from cola2_msgs.msg import GoalDescriptor, CaptainStatus, CaptainStateFeedback
 from cola2_msgs.msg import PilotActionResult, PilotAction, PilotGoal
 from cola2_msgs.msg import NavSts
 from cola2_msgs.msg import BodyVelocityReq
-from cola2_msgs.srv import Goto, GotoRequest, Section, SectionRequest
 from shapely.geometry import Polygon, Point
-from sensor_msgs.msg import BatteryState
 import numpy as np
-from std_srvs.srv import Empty, EmptyResponse
-from multi_robot_system.msg import TravelledDistance, CoverageStartTime
 
 class Robot:
 
@@ -34,7 +31,7 @@ class Robot:
         self.ned_origin_lon = self.get_param('ned_origin_lon',2.377940)
         self.robot_ID = self.get_param('~robot_ID',0)
         self.robot_name = self.get_param('~robot_name','sparus')
-        self.collision_algorithm = self.get_param('collision_algorithm', "stop&wait")
+        self.collision_algorithm = self.get_param('collision_algorithm', 'stop&wait')
         self.distance = []
         self.travelled_distance = []
         self.robots_travelled_distances = [0,0,0,0,0,0]
@@ -47,11 +44,14 @@ class Robot:
         self.section_req = PilotGoal()
         self.collision = False
         robot_data = [0,0]
-        self.robots_information = []
+        self.robots_position = []
+        self.robots_orientation = []
+        self.critical_dist = 10.0
         # Define the main polygon object
         self.danger_zone_coords = ((10,20),(-10,20),(10,-20),(10,-20))
         for robot in range(self.number_of_robots):
-            self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
+            self.robots_position.append(robot_data) #set the self.robots_position initialized to 0
+            self.robots_orientation.append([0]) #set the self.robots_orientation initialized to 0
 
         # Publishers
         self.body_velocity_req_pub = rospy.Publisher('/sparus_' + str(self.robot_ID) + '/controller/body_velocity_req',
@@ -85,7 +85,7 @@ class Robot:
         self.section_req.initial_latitude = init_lat
         self.section_req.initial_longitude = init_lon
         self.section_req.initial_depth = self.navigation_depth
-        # section_req.final_yaw = self.robots_information[robot_id][2] #yaw
+        # section_req.final_yaw = self.robots_position[robot_id][2] #yaw
         self.section_req.final_latitude = final_lat
         self.section_req.final_longitude = final_lon
         self.section_req.final_depth = self.navigation_depth
@@ -117,22 +117,6 @@ class Robot:
         self.section_strategy.wait_for_result()
 
         self.first_time = False
-
-        # section_req = SectionRequest()
-        # section_req.initial_x = initial_position_x
-        # section_req.initial_y = initial_position_y
-        # section_req.initial_depth = self.navigation_depth
-        # section_req.final_x = final_position_x
-        # section_req.final_y = final_position_y
-        # section_req.final_altitude = self.navigation_depth
-        # section_req.final_depth = self.navigation_depth
-        # section_req.reference = 0
-        # section_req.heave_mode = 0
-        # section_req.surge_velocity = self.surge_velocity
-        # section_req.tolerance_xy = 1
-        # section_req.timeout = 6000
-        # section_req.no_altitude_goes_up = 0
-        # self.section_srv(section_req)
         
     def update_robot_position(self, msg):
         try:
@@ -140,22 +124,22 @@ class Robot:
         except:
             pass
         else:
-            self.robots_information[frame_id - 1] = (msg.position.north, msg.position.east)
-
+            self.robots_position[frame_id - 1] = (msg.position.north, msg.position.east)
+            self.robots_orientation[frame_id - 1] = msg.orientation.yaw
 
     def check_collision(self, event):
         # Sets danger zone based on the algorithm used
-        if self.collision_algorithm == "stop&wait":
+        if self.collision_algorithm == 'stop&wait':
             self.danger_zone = Polygon(self.danger_zone_coords)
-        elif self.collision_algorithm == "PF":
-            self.danger_zone = Point(self.robots_information[1]).buffer(2.0)
-            
-        if self.danger_zone.contains(Point(self.robots_information[0])):
+        elif self.collision_algorithm == 'PF':
+            self.danger_zone = Point(self.robots_position[1]).buffer(self.critical_dist)
+
+        if self.danger_zone.contains(Point(self.robots_position[0])):
             if(self.robot_ID == 2 and not self.first_time):
                 self.collision = True
                 self.section_strategy.cancel_all_goals()
                 self.avoid_collision()
-        elif (self.collision and self.robot_ID == 2):
+        elif (self.collision and not self.first_time):
             self.collision = False
             self.section_strategy.send_goal(self.section_req)
             self.section_strategy.wait_for_result()
@@ -166,17 +150,56 @@ class Robot:
     #           disable_axis.x  .y disable_axis.z disable_axis.roll disable_axis.pitch disable_axis.yaw]
     def avoid_collision(self):
 
-        print("Within critical distance")
 
-        # publish the data
-        # msg = BodyVelocityReq()
-        # msg.header.stamp = rospy.Time.now()
-        # msg.goal.requester = rospy.get_name()
-        # msg.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
-        # msg.disable_axis.y = True
-        # msg.twist.angular.z = 10
-        # self.body_velocity_req_pub.publish(msg)
+        if(self.collision_algorithm == 'PF'):
+
+            w1 = 1.0
+            w2 = 2.0
+
+            goal_pos_x, goal_pos_y, _ = self.ned.geodetic2ned([self.section_req.final_latitude, self.section_req.final_longitude, 0])
+            goal_pos = np.array([goal_pos_x, goal_pos_y])
+            init_pos = np.array(self.robots_position[1])
+            obs_pos = np.array(self.robots_position[0])
+
+            goal_vector = self.unit_vector(init_pos,goal_pos)
+
+            obs_dist = np.linalg.norm(obs_pos - init_pos)
+
+            K = ((self.critical_dist - obs_dist) / self.critical_dist)
+
+            obs_vector = K * self.unit_vector(obs_pos, init_pos)
+
+            obs_angle = math.atan2(obs_vector[1], obs_vector[0])
+
+            final_vector = w1*goal_vector + w2*obs_vector
+
+            angle = math.atan2(final_vector[1], final_vector[0])
+
+            ang_err = angle - self.robots_orientation[1]
+            print("error: ")
+            print(ang_err)
+
+            Wz = ang_err
+
+            if (ang_err > pi/3 or ang_err < -pi/3): Vx = 0
+            else: Vx = self.surge_velocity
+
+            # publish the data
+            msg = BodyVelocityReq()
+            msg.header.stamp = rospy.Time.now()
+            msg.goal.requester = rospy.get_name()
+            msg.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
+            msg.twist.linear.x = Vx
+            msg.twist.angular.z = Wz
+            self.body_velocity_req_pub.publish(msg)
+
+
   
+    def unit_vector(self, init_pos, final_pos):
+        vector = final_pos - init_pos
+        magnitude = np.linalg.norm(vector)
+        return vector/magnitude
+
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
             param_value = rospy.get_param(param_name)
