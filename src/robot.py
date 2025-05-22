@@ -47,6 +47,7 @@ class Robot:
         self.robots_position = []
         self.robots_orientation = []
         self.critical_dist = 10.0
+        self.arrived = True
         # Define the main polygon object
         self.danger_zone_coords = ((10,20),(-10,20),(10,-20),(10,-20))
         for robot in range(self.number_of_robots):
@@ -116,6 +117,9 @@ class Robot:
         #  Wait for result or cancel if timed out
         self.section_strategy.wait_for_result()
 
+        # In case of collision, waits for the AUV to arrive to goal
+        self.wait_for_arrival()
+
         self.first_time = False
         
     def update_robot_position(self, msg):
@@ -134,22 +138,23 @@ class Robot:
         elif self.collision_algorithm == 'PF':
             self.danger_zone = Point(self.robots_position[1]).buffer(self.critical_dist)
 
-        if self.danger_zone.contains(Point(self.robots_position[0])):
-            if(self.robot_ID == 2 and not self.first_time):
+        if (self.danger_zone.contains(Point(self.robots_position[0])) and not self.first_time or not self.arrived):
+            if(self.robot_ID == 2):
+                self.arrived = False
                 self.collision = True
                 self.section_strategy.cancel_all_goals()
                 self.avoid_collision()
-        elif (self.collision and not self.first_time):
-            self.collision = False
-            self.section_strategy.send_goal(self.section_req)
-            self.section_strategy.wait_for_result()
+            elif (self.collision and self.collision_algorithm == 'stop&wait'):
+                self.collision = False
+                self.section_strategy.send_goal(self.section_req)
+                self.section_strategy.wait_for_result()
+
 
 
     #Args are: [header.seq header.stamp header.frame_id goal.requester goal.priority 
     #           twist.linear.x twist.linear.y twist.linear.z twist.angular.x twist.angular.y twist.angular.z 
     #           disable_axis.x  .y disable_axis.z disable_axis.roll disable_axis.pitch disable_axis.yaw]
     def avoid_collision(self):
-
 
         if(self.collision_algorithm == 'PF'):
 
@@ -160,45 +165,74 @@ class Robot:
             goal_pos = np.array([goal_pos_x, goal_pos_y])
             init_pos = np.array(self.robots_position[1])
             obs_pos = np.array(self.robots_position[0])
+            print(goal_pos)
 
-            goal_vector = self.unit_vector(init_pos,goal_pos)
+            #Checks if AUV is at goal
+            goal_zone = Point(goal_pos).buffer(2)
+            if(goal_zone.contains(Point(init_pos))):
+                self.arrived = True
+            else: self.arrived = False
 
-            obs_dist = np.linalg.norm(obs_pos - init_pos)
+            goal_vector = self.unit_vector(init_pos, goal_pos)
 
-            K = ((self.critical_dist - obs_dist) / self.critical_dist)
+            obs_vector = self.obstacle_vector(init_pos, obs_pos)
 
-            obs_vector = K * self.unit_vector(obs_pos, init_pos)
-
-            obs_angle = math.atan2(obs_vector[1], obs_vector[0])
-
-            final_vector = w1*goal_vector + w2*obs_vector
+            final_vector = w1 * goal_vector + w2 * obs_vector
 
             angle = math.atan2(final_vector[1], final_vector[0])
 
-            ang_err = angle - self.robots_orientation[1]
-            print("error: ")
-            print(ang_err)
+            if(abs(angle) > pi/2 and abs(self.robots_orientation[1]) > pi/2):
+                ang_err = self.angle_correction(angle)
+            else: ang_err = angle - self.robots_orientation[1]
 
-            Wz = ang_err
+            Wz = ang_err*0.7
 
-            if (ang_err > pi/3 or ang_err < -pi/3): Vx = 0
+            if (abs(ang_err) > pi/3): Vx = 0
             else: Vx = self.surge_velocity
 
             # publish the data
-            msg = BodyVelocityReq()
-            msg.header.stamp = rospy.Time.now()
-            msg.goal.requester = rospy.get_name()
-            msg.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
-            msg.twist.linear.x = Vx
-            msg.twist.angular.z = Wz
-            self.body_velocity_req_pub.publish(msg)
+            self.send_body_velocity_req(Vx, Wz)
 
+        else: 
+            print("Within critical distance")
 
-  
     def unit_vector(self, init_pos, final_pos):
         vector = final_pos - init_pos
         magnitude = np.linalg.norm(vector)
         return vector/magnitude
+
+    def obstacle_vector(self, init_pos, obs_pos):
+        obs_dist = np.linalg.norm(init_pos - obs_pos)
+        #print(obs_dist)
+
+        if obs_dist > self.critical_dist: 
+            K = 0
+        else:
+            K = (self.critical_dist - obs_dist) / self.critical_dist
+            print("Within critical distance")
+        return K * self.unit_vector(obs_pos, init_pos)
+
+    def angle_correction(self, angle):
+        if(self.robots_orientation[1] < 0 and angle > 0):
+            return angle - (self.robots_orientation[1] + 2 * pi)
+        elif (self.robots_orientation[1] > 0 and angle < 0):
+            return angle - (self.robots_orientation[1] - 2 * pi)
+        else: return angle - self.robots_orientation[1]
+
+
+    def wait_for_arrival(self):
+        while not rospy.is_shutdown():
+            if self.arrived:
+                break
+
+    def send_body_velocity_req(self, Vx, Wz):
+        msg = BodyVelocityReq()
+        msg.header.stamp = rospy.Time.now()
+        msg.goal.requester = rospy.get_name()
+        msg.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
+        msg.twist.linear.x = Vx
+        msg.twist.angular.z = Wz
+        self.body_velocity_req_pub.publish(msg)
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
