@@ -46,6 +46,7 @@ class Robot:
         robot_data = [0,0]
         self.robots_position = []
         self.robots_orientation = []
+        self.collision_check = []
         self.critical_dist = 10.0
         self.arrived = True
         self.last = False
@@ -54,6 +55,7 @@ class Robot:
         for robot in range(self.number_of_robots):
             self.robots_position.append(robot_data) #set the self.robots_position initialized to 0
             self.robots_orientation.append([0]) #set the self.robots_orientation initialized to 0
+            self.collision_check.append(False)
 
         # Publishers
         self.body_velocity_req_pub = rospy.Publisher('/sparus_' + str(self.robot_ID) + '/controller/body_velocity_req',
@@ -140,13 +142,18 @@ class Robot:
         elif self.collision_algorithm == 'PF':
             self.danger_zone = Point(self.robots_position[self.robot_ID - 1]).buffer(self.critical_dist)
 
-        if (self.danger_zone.contains(Point(self.robots_position[0])) and not self.first_time or not self.arrived):
-            if(self.robot_ID == 2):
-                self.arrived = False
-                self.collision = True
-                self.section_strategy.cancel_all_goals()
-                self.avoid_collision()
-            elif (self.collision and self.collision_algorithm == 'stop&wait'):
+        for robot in range(self.robot_ID - 1):
+            if self.robot_ID is 1:
+                break
+            if (self.danger_zone.contains(Point(self.robots_position[robot])) and not self.first_time):
+                self.collision_check[robot] = True #ERROR AQUI##############
+
+        if any(self.collision_check):
+            self.arrived = False
+            self.collision = True
+            self.section_strategy.cancel_all_goals()
+            self.avoid_collision()
+        elif (self.collision and self.collision_algorithm == 'stop&wait'):
                 self.collision = False
                 self.section_strategy.send_goal(self.section_req)
                 self.section_strategy.wait_for_result()
@@ -165,10 +172,7 @@ class Robot:
 
             goal_pos_x, goal_pos_y, _ = self.ned.geodetic2ned([self.section_req.final_latitude, self.section_req.final_longitude, 0])
             goal_pos = np.array([goal_pos_x, goal_pos_y])
-            init_pos = np.array(self.robots_position[1])
-            obs_pos = np.array(self.robots_position[0])
-            obs_dist = np.linalg.norm(init_pos - obs_pos)
-            print(obs_dist)
+            init_pos = np.array(self.robots_position[self.robot_ID - 1])
 
             #Checks if AUV is at goal
             goal_zone = Point(goal_pos).buffer(2)
@@ -178,17 +182,17 @@ class Robot:
 
             goal_vector = self.unit_vector(init_pos, goal_pos)
 
-            obs_vector = self.obstacle_vector(init_pos, obs_pos, obs_dist)
+            obs_vector = self.obstacle_vector(init_pos)
 
             final_vector = w1 * goal_vector + w2 * obs_vector
 
             angle = math.atan2(final_vector[1], final_vector[0])
 
-            if(abs(angle) > pi/2 and abs(self.robots_orientation[1]) > pi/2):
+            if(abs(angle) > pi/2 and abs(self.robots_orientation[self.robot_ID - 1]) > pi/2):
                 ang_err = self.angle_correction(angle)
-            else: ang_err = angle - self.robots_orientation[1]
+            else: ang_err = angle - self.robots_orientation[self.robot_ID - 1]
 
-            Wz = ang_err * 0.8
+            Wz = ang_err * 0.9
 
             if (abs(ang_err) > pi/2): Vx = 0
             else: Vx = self.surge_velocity
@@ -204,21 +208,30 @@ class Robot:
         magnitude = np.linalg.norm(vector)
         return vector/magnitude
 
-    def obstacle_vector(self, init_pos, obs_pos, obs_dist):
+    def obstacle_vector(self, init_pos):
 
-        if obs_dist > self.critical_dist: 
-            K = 0
-        else:
-            K = (self.critical_dist - obs_dist) / self.critical_dist
-            print("Within critical distance")
-        return K * self.unit_vector(obs_pos, init_pos)
+        obs_vector = np.array([0.0, 0.0])
+
+        for robot in range(self.robot_ID - 1):
+            if self.collision_check[robot]:
+                obs_pos = np.array(self.robots_position[robot])
+                obs_dist = np.linalg.norm(init_pos - obs_pos)
+
+                if obs_dist > self.critical_dist: 
+                    K = 0
+                else:
+                    K = (self.critical_dist - obs_dist) / self.critical_dist
+                    print("Within critical distance")
+
+                obs_vector += K * self.unit_vector(obs_pos, init_pos)
+        return obs_vector
 
     def angle_correction(self, angle):
-        if(self.robots_orientation[1] < 0 and angle > 0):
-            return angle - (self.robots_orientation[1] + 2 * pi)
-        elif (self.robots_orientation[1] > 0 and angle < 0):
-            return angle - (self.robots_orientation[1] - 2 * pi)
-        else: return angle - self.robots_orientation[1]
+        if(self.robots_orientation[self.robot_ID - 1] < 0 and angle > 0):
+            return angle - (self.robots_orientation[self.robot_ID - 1] + 2 * pi)
+        elif (self.robots_orientation[self.robot_ID - 1] > 0 and angle < 0):
+            return angle - (self.robots_orientation[self.robot_ID - 1] - 2 * pi)
+        else: return angle - self.robots_orientation[self.robot_ID - 1]
 
 
     def wait_for_arrival(self):

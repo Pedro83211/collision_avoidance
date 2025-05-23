@@ -16,6 +16,14 @@
       <arg name="robot_name" value="sparus_2"/>
       <arg name="enable_keyboard" value="true"/>
     </include>
+    <include file="$(find cola2_sparus2)/launch/sim_start.launch">
+      <arg name="robot_name" value="sparus_3"/>
+      <arg name="enable_keyboard" value="true"/>
+    </include>
+    <include file="$(find cola2_sparus2)/launch/sim_start.launch">
+      <arg name="robot_name" value="sparus_4"/>
+      <arg name="enable_keyboard" value="true"/>
+    </include>
     
   </group>
 
@@ -34,6 +42,16 @@
       <node name="AUV_sparus_2" pkg="collision_avoidance" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="2"/>
         <param name="robot_name" value="sparus_2"/>
+        <param name="navigation_depth" value="0"/>
+      </node>
+      <node name="AUV_sparus_3" pkg="collision_avoidance" type="AUV_robot.py" output="screen" respawn="true">
+        <param name="robot_ID" value="3"/>
+        <param name="robot_name" value="sparus_3"/>
+        <param name="navigation_depth" value="0"/>
+      </node>
+      <node name="AUV_sparus_4" pkg="collision_avoidance" type="AUV_robot.py" output="screen" respawn="true">
+        <param name="robot_ID" value="4"/>
+        <param name="robot_name" value="sparus_4"/>
         <param name="navigation_depth" value="0"/>
       </node>
     </group>

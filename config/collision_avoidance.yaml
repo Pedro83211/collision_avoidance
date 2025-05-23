@@ -1,8 +1,7 @@
 # ---------------------------------------------------------
 #           COLLISION AVOIDANCE CONFIGURATION FILE            
 # ---------------------------------------------------------
-number_of_robots: 2 #TOTAL number of robots
-number_of_auvs: 2
+number_of_robots: 4 #TOTAL number of robots
 
 # NED origin definition
 ned_origin_lat: 39.543330

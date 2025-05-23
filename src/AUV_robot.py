@@ -20,21 +20,30 @@ class CollisionAvoidance:
             NavSts,
             self.update_robot_position) 
         
-        rospy.sleep(5)
+        rospy.sleep(10)
 
-        if self.robot_ID == 1 :
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+        if self.robot_ID == 1:
+            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
+            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 10), self.robot_ID, self.last_section)
             self.last_section = True
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
-        else:
-            rospy.sleep(5)
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID, self.last_section)
-            print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, -10), self.robot_ID, self.last_section)
+            #self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
+        elif self.robot_ID == 2:
+            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID, self.last_section)
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, -10), self.robot_ID, self.last_section)
             self.last_section = True
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID, self.last_section)
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 10), self.robot_ID, self.last_section)
+            #self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+        elif self.robot_ID == 3:
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 10), self.robot_ID, self.last_section)
+            self.last_section = True
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, -10), self.robot_ID, self.last_section)
+        elif self.robot_ID == 4:
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, -10), self.robot_ID, self.last_section)
+            self.last_section = True
+            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 10), self.robot_ID, self.last_section)
         
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
