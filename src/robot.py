@@ -48,6 +48,7 @@ class Robot:
         self.robots_orientation = []
         self.critical_dist = 10.0
         self.arrived = True
+        self.last = False
         # Define the main polygon object
         self.danger_zone_coords = ((10,20),(-10,20),(10,-20),(10,-20))
         for robot in range(self.number_of_robots):
@@ -98,6 +99,7 @@ class Robot:
         # uint64 BOTH=2
 
         # If last section, null tolerance to force maintain position
+        self.last = last
         if not last: self.section_req.tolerance_xy = self.tolerance
         else: self.section_req.tolerance_xy = 0
         self.section_req.surge_velocity = self.surge_velocity
@@ -136,7 +138,7 @@ class Robot:
         if self.collision_algorithm == 'stop&wait':
             self.danger_zone = Polygon(self.danger_zone_coords)
         elif self.collision_algorithm == 'PF':
-            self.danger_zone = Point(self.robots_position[1]).buffer(self.critical_dist)
+            self.danger_zone = Point(self.robots_position[self.robot_ID - 1]).buffer(self.critical_dist)
 
         if (self.danger_zone.contains(Point(self.robots_position[0])) and not self.first_time or not self.arrived):
             if(self.robot_ID == 2):
@@ -165,17 +167,18 @@ class Robot:
             goal_pos = np.array([goal_pos_x, goal_pos_y])
             init_pos = np.array(self.robots_position[1])
             obs_pos = np.array(self.robots_position[0])
-            print(goal_pos)
+            obs_dist = np.linalg.norm(init_pos - obs_pos)
+            print(obs_dist)
 
             #Checks if AUV is at goal
             goal_zone = Point(goal_pos).buffer(2)
-            if(goal_zone.contains(Point(init_pos))):
+            if(goal_zone.contains(Point(init_pos)) and not self.last):
                 self.arrived = True
             else: self.arrived = False
 
             goal_vector = self.unit_vector(init_pos, goal_pos)
 
-            obs_vector = self.obstacle_vector(init_pos, obs_pos)
+            obs_vector = self.obstacle_vector(init_pos, obs_pos, obs_dist)
 
             final_vector = w1 * goal_vector + w2 * obs_vector
 
@@ -185,9 +188,9 @@ class Robot:
                 ang_err = self.angle_correction(angle)
             else: ang_err = angle - self.robots_orientation[1]
 
-            Wz = ang_err*0.7
+            Wz = ang_err * 0.8
 
-            if (abs(ang_err) > pi/3): Vx = 0
+            if (abs(ang_err) > pi/2): Vx = 0
             else: Vx = self.surge_velocity
 
             # publish the data
@@ -201,9 +204,7 @@ class Robot:
         magnitude = np.linalg.norm(vector)
         return vector/magnitude
 
-    def obstacle_vector(self, init_pos, obs_pos):
-        obs_dist = np.linalg.norm(init_pos - obs_pos)
-        #print(obs_dist)
+    def obstacle_vector(self, init_pos, obs_pos, obs_dist):
 
         if obs_dist > self.critical_dist: 
             K = 0
