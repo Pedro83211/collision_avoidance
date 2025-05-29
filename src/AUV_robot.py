@@ -23,19 +23,21 @@ class CollisionAvoidance:
         rospy.sleep(10)
 
         if self.robot_ID == 1:
-            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
-            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
             self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 10), self.robot_ID, self.last_section)
             self.last_section = True
             self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, -10), self.robot_ID, self.last_section)
-            #self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
-        elif self.robot_ID == 2:
+            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
             # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
-            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID, self.last_section)
+            # self.last_section = True
+            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
+        elif self.robot_ID == 2:
             self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, -10), self.robot_ID, self.last_section)
             self.last_section = True
             self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 10), self.robot_ID, self.last_section)
-            #self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID, self.last_section)
+            # self.last_section = True
+            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
         elif self.robot_ID == 3:
             self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 10), self.robot_ID, self.last_section)
             self.last_section = True

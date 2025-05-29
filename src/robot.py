@@ -74,7 +74,7 @@ class Robot:
         self.section_strategy.wait_for_server()
         
         # Init periodic timers
-        rospy.Timer(rospy.Duration(0.05), self.check_collision)
+        rospy.Timer(rospy.Duration(0.03), self.check_collision)
 
     def send_section_strategy(self,initial_point,final_point,robot_id,last):
         initial_position_x = initial_point[0]
@@ -142,15 +142,17 @@ class Robot:
         elif self.collision_algorithm == 'PF':
             self.danger_zone = Point(self.robots_position[self.robot_ID - 1]).buffer(self.critical_dist)
 
-        for robot in range(self.robot_ID - 1):
-            if self.robot_ID is 1:
-                break
+        for robot in range(self.number_of_robots):
+            if (robot == self.robot_ID - 1): continue
             if (self.danger_zone.contains(Point(self.robots_position[robot])) and not self.first_time):
-                self.collision_check[robot] = True #ERROR AQUI##############
+                self.collision_check[robot] = True
+            else: self.collision_check[robot] = False
 
-        if any(self.collision_check):
-            self.arrived = False
+        #print(self.collision_check)
+
+        if any(self.collision_check) or not self.arrived:
             self.collision = True
+            self.arrived = False
             self.section_strategy.cancel_all_goals()
             self.avoid_collision()
         elif (self.collision and self.collision_algorithm == 'stop&wait'):
@@ -158,11 +160,6 @@ class Robot:
                 self.section_strategy.send_goal(self.section_req)
                 self.section_strategy.wait_for_result()
 
-
-
-    #Args are: [header.seq header.stamp header.frame_id goal.requester goal.priority 
-    #           twist.linear.x twist.linear.y twist.linear.z twist.angular.x twist.angular.y twist.angular.z 
-    #           disable_axis.x  .y disable_axis.z disable_axis.roll disable_axis.pitch disable_axis.yaw]
     def avoid_collision(self):
 
         if(self.collision_algorithm == 'PF'):
@@ -188,13 +185,11 @@ class Robot:
 
             angle = math.atan2(final_vector[1], final_vector[0])
 
-            if(abs(angle) > pi/2 and abs(self.robots_orientation[self.robot_ID - 1]) > pi/2):
-                ang_err = self.angle_correction(angle)
-            else: ang_err = angle - self.robots_orientation[self.robot_ID - 1]
+            ang_err = self.angle_correction(angle)
 
-            Wz = ang_err * 0.9
+            Wz = ang_err * 0.7
 
-            if (abs(ang_err) > pi/2): Vx = 0
+            if (abs(ang_err) > pi/4): Vx = 0
             else: Vx = self.surge_velocity
 
             # publish the data
@@ -212,26 +207,28 @@ class Robot:
 
         obs_vector = np.array([0.0, 0.0])
 
-        for robot in range(self.robot_ID - 1):
+        for robot in range(self.number_of_robots):
+            if (robot == self.robot_ID - 1): continue
             if self.collision_check[robot]:
                 obs_pos = np.array(self.robots_position[robot])
                 obs_dist = np.linalg.norm(init_pos - obs_pos)
 
-                if obs_dist > self.critical_dist: 
-                    K = 0
-                else:
-                    K = (self.critical_dist - obs_dist) / self.critical_dist
-                    print("Within critical distance")
+                K = (self.critical_dist - obs_dist) / self.critical_dist
+                print("Within critical distance")
 
                 obs_vector += K * self.unit_vector(obs_pos, init_pos)
+
         return obs_vector
 
     def angle_correction(self, angle):
-        if(self.robots_orientation[self.robot_ID - 1] < 0 and angle > 0):
-            return angle - (self.robots_orientation[self.robot_ID - 1] + 2 * pi)
-        elif (self.robots_orientation[self.robot_ID - 1] > 0 and angle < 0):
-            return angle - (self.robots_orientation[self.robot_ID - 1] - 2 * pi)
-        else: return angle - self.robots_orientation[self.robot_ID - 1]
+
+        if(abs(angle) > pi/2 and abs(self.robots_orientation[self.robot_ID - 1]) > pi/2):
+            if(self.robots_orientation[self.robot_ID - 1] < 0 and angle > 0):
+                return angle - (self.robots_orientation[self.robot_ID - 1] + 2 * pi)
+            elif (self.robots_orientation[self.robot_ID - 1] > 0 and angle < 0):
+                return angle - (self.robots_orientation[self.robot_ID - 1] - 2 * pi)
+            
+        return angle - self.robots_orientation[self.robot_ID - 1]
 
 
     def wait_for_arrival(self):
@@ -239,6 +236,9 @@ class Robot:
             if self.arrived:
                 break
 
+    #Args are: [header.seq header.stamp header.frame_id goal.requester goal.priority 
+    #           twist.linear.x twist.linear.y twist.linear.z twist.angular.x twist.angular.y twist.angular.z 
+    #           disable_axis.x  .y disable_axis.z disable_axis.roll disable_axis.pitch disable_axis.yaw]
     def send_body_velocity_req(self, Vx, Wz):
         msg = BodyVelocityReq()
         msg.header.stamp = rospy.Time.now()
