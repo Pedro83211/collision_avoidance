@@ -20,7 +20,7 @@ class Robot:
 
     def __init__(self, name):
         self.name = name
-        self.tolerance = self.get_param('tolerance',2)
+        self.tolerance = self.get_param('tolerance',1)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.battery_topic = self.get_param('~battery_topic','/sparus_1/batteries/status')
         self.section_action = self.get_param('~section_action','/sparus_1/pilot/world_section_req') 
@@ -77,13 +77,9 @@ class Robot:
         rospy.Timer(rospy.Duration(0.03), self.check_collision)
 
     def send_section_strategy(self,initial_point,final_point,robot_id,last):
-        initial_position_x = initial_point[0]
-        final_position_x = final_point[0]
-        initial_position_y = initial_point[1]
-        final_position_y = final_point[1]
 
-        init_lat, init_lon, _ = self.ned.ned2geodetic([initial_position_x, initial_position_y, 0.0])
-        final_lat, final_lon, _ = self.ned.ned2geodetic([final_position_x, final_position_y, 0.0])
+        init_lat, init_lon = initial_point
+        final_lat, final_lon = final_point
 
         self.section_req = PilotGoal()
         self.section_req.initial_latitude = init_lat
@@ -247,6 +243,11 @@ class Robot:
         msg.twist.linear.x = Vx
         msg.twist.angular.z = Wz
         self.body_velocity_req_pub.publish(msg)
+
+    def ned2geodetic(self, point):
+        lat, lon, _ = self.ned.ned2geodetic([point[0], point[1], 0])
+        return (lat,lon)
+         
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):

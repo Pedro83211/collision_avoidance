@@ -1,18 +1,21 @@
 #!/usr/bin/env python
 import rospy
 from cola2_msgs.msg import  NavSts
+import xml.etree.ElementTree as ET
 
 #import classes
 from robot import Robot
+from mission_generator import GenerateMission
 
 class CollisionAvoidance:
 
     def __init__(self, name):
         self.name = name
         self.robot_ID = self.get_param('~robot_ID')
-        self.robot_position_north=0
-        self.robot_position_east=0
+        self.mission = self.get_param('mission',"/home/pedro/catkin_ws/src/collision_avoidance/missions/mission_" + str(self.robot_ID) +".xml")
+        self.robot_position = 0
         self.robot_handler = Robot("robot")
+        self.mission_handler = GenerateMission("mission")
         self.last_section = False
 
         rospy.Subscriber(
@@ -22,34 +25,63 @@ class CollisionAvoidance:
         
         rospy.sleep(10)
 
-        if self.robot_ID == 1:
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 10), self.robot_ID, self.last_section)
-            self.last_section = True
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, -10), self.robot_ID, self.last_section)
-            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
-            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
-            # self.last_section = True
-            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
-        elif self.robot_ID == 2:
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, -10), self.robot_ID, self.last_section)
-            self.last_section = True
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 10), self.robot_ID, self.last_section)
-            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
-            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID, self.last_section)
-            # self.last_section = True
-            # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
-        elif self.robot_ID == 3:
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 10), self.robot_ID, self.last_section)
-            self.last_section = True
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, -10), self.robot_ID, self.last_section)
-        elif self.robot_ID == 4:
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, -10), self.robot_ID, self.last_section)
-            self.last_section = True
-            self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 10), self.robot_ID, self.last_section)
+        self.mission_steps()
+
+    def mission_steps(self):
+        try:
+            # Parse the XML file
+            tree = ET.parse(self.mission)
+            root = tree.getroot()
+
+            # Recorrer cada "mission_step" en el XML
+            for mission_step in root.findall("mission_step"):
+                maneuver = mission_step.find("maneuver")
+
+                last_str = maneuver.find("last_section")
+                last = bool(int(last_str.text))
+
+                # Extraer final_latitude y final_longitude si están presentes
+                initial_point = self.robot_handler.ned2geodetic(self.robot_position)
+
+                final_lat = maneuver.find("final_latitude")
+                final_lon = maneuver.find("final_longitude")
+                final_point = (float(final_lat.text), float(final_lon.text))
+
+                if final_lat is not None and final_lon is not None:
+                    self.robot_handler.send_section_strategy(initial_point, final_point, self.robot_ID, last)
+
+        except ET.ParseError as e:
+            print(f"Error al analizar el archivo XML: {e}")
+        except Exception as e:
+            print(f"Error inesperado: {e}")
+
+        # if self.robot_ID == 1:
+        #     self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 10), self.robot_ID, self.last_section)
+        #     self.last_section = True
+        #     self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, -10), self.robot_ID, self.last_section)
+        #     # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
+        #     # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+        #     # self.last_section = True
+        #     # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 0), self.robot_ID, self.last_section)
+        # elif self.robot_ID == 2:
+        #     self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, -10), self.robot_ID, self.last_section)
+        #     self.last_section = True
+        #     self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 10), self.robot_ID, self.last_section)
+        #     # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+        #     # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (0, 0), self.robot_ID, self.last_section)
+        #     # self.last_section = True
+        #     # self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 0), self.robot_ID, self.last_section)
+        # elif self.robot_ID == 3:
+        #     self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, 10), self.robot_ID, self.last_section)
+        #     self.last_section = True
+        #     self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, -10), self.robot_ID, self.last_section)
+        # elif self.robot_ID == 4:
+        #     self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (-10, -10), self.robot_ID, self.last_section)
+        #     self.last_section = True
+        #     self.robot_handler.send_section_strategy((self.robot_position_north, self.robot_position_east), (10, 10), self.robot_ID, self.last_section)
         
     def update_robot_position(self, msg):
-        self.robot_position_north = msg.position.north
-        self.robot_position_east = msg.position.east
+        self.robot_position = (msg.position.north, msg.position.east) 
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
