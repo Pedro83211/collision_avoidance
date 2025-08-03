@@ -15,6 +15,8 @@ from cola2_msgs.msg import NavSts
 from cola2_msgs.msg import BodyVelocityReq
 from shapely.geometry import Polygon, Point
 import numpy as np
+import copy
+from geometry_msgs.msg import PolygonStamped, Point32
 
 class Robot:
 
@@ -32,26 +34,34 @@ class Robot:
         self.robot_ID = self.get_param('~robot_ID',0)
         self.robot_name = self.get_param('~robot_name','sparus')
         self.collision_algorithm = self.get_param('collision_algorithm', 'stop&wait')
+        self.area_of_exploration = self.get_param('area_of_exploration', 400)
         self.distance = []
         self.travelled_distance = []
         self.robots_travelled_distances = [0,0,0,0,0,0]
         self.robot_alive = False
         self.is_section_actionlib_running = False
         self.battery_status = [0,0,0]
-        self.first_time = True
         self.ns = rospy.get_namespace()
         self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  #NED frame
         self.section_req = PilotGoal()
-        self.collision = False
         robot_data = [0,0]
         self.robots_position = []
         self.robots_orientation = []
         self.collision_check = []
+        self.collision_pos = []
         self.critical_dist = 10.0
         self.arrived = True
+        self.first_section = True
+        self.first_collision = True
+        self.once = [True, True]
         self.last = False
+
         # Define the main polygon object
-        self.danger_zone_coords = ((10,20),(-10,20),(10,-20),(10,-20))
+        side = math.sqrt(self.area_of_exploration)/2 + self.tolerance
+        self.danger_zone_coords = np.array([[-side/3,-side], [-side/3,side], [side/3,side], [side/3,-side], [-side/3,-side]])
+        self.danger_zone = 0
+
+        # Initialize arrays
         for robot in range(self.number_of_robots):
             self.robots_position.append(robot_data) #set the self.robots_position initialized to 0
             self.robots_orientation.append([0]) #set the self.robots_orientation initialized to 0
@@ -61,6 +71,10 @@ class Robot:
         self.body_velocity_req_pub = rospy.Publisher('/sparus_' + str(self.robot_ID) + '/controller/body_velocity_req',
                                          BodyVelocityReq,
                                          queue_size=1)     #'/robot'+str(self.robot_ID)+'/travelled_distance' ,
+        
+        self.polygon_stamped_pub = rospy.Publisher('/markers/danger_zone',
+                                         PolygonStamped,
+                                         queue_size=1)  
         
         # Subscribers
         for robot in range(self.number_of_robots):
@@ -120,7 +134,7 @@ class Robot:
         # In case of collision, waits for the AUV to arrive to goal
         self.wait_for_arrival()
 
-        self.first_time = False
+        self.first_section = False
         
     def update_robot_position(self, msg):
         try:
@@ -135,40 +149,74 @@ class Robot:
         # Sets danger zone based on the algorithm used
         if self.collision_algorithm == 'stop&wait':
             self.danger_zone = Polygon(self.danger_zone_coords)
+            self.send_polygon_stamped()
         elif self.collision_algorithm == 'PF':
             self.danger_zone = Point(self.robots_position[self.robot_ID - 1]).buffer(self.critical_dist)
 
+        # Fills a boolean array with collision detection for each robot
         for robot in range(self.number_of_robots):
             if (robot == self.robot_ID - 1): continue
-            if (self.danger_zone.contains(Point(self.robots_position[robot])) and not self.first_time):
+            if (self.danger_zone.contains(Point(self.robots_position[robot])) and not self.first_section):
                 self.collision_check[robot] = True
             else: self.collision_check[robot] = False
 
-        #print(self.collision_check)
-
-        if any(self.collision_check) or not self.arrived:
-            self.collision = True
+        if any(self.collision_check):
             self.arrived = False
-            self.section_strategy.cancel_all_goals()
+            if(self.first_collision):
+                self.collision_pos = self.robots_position[self.robot_ID - 1]
+                print("++++++++++++++++++++++++CANCELLING GOALS++++++++++++++++++++++++")
+                self.section_strategy.cancel_goal()
+                self.first_collision = False
+                self.once = [True, True]
             self.avoid_collision()
-        elif (self.collision and self.collision_algorithm == 'stop&wait'):
-                self.collision = False
-                self.section_strategy.send_goal(self.section_req)
-                self.section_strategy.wait_for_result()
+        elif not self.arrived:
+            self.first_collision = True
+            self.avoid_collision()
 
     def avoid_collision(self):
 
-        if(self.collision_algorithm == 'PF'):
+        # Saves the positions variables
+        goal_pos_x, goal_pos_y, _ = self.ned.geodetic2ned([self.section_req.final_latitude, self.section_req.final_longitude, 0])
+        goal_pos = np.array([goal_pos_x, goal_pos_y])
+        init_pos = np.array(self.robots_position[self.robot_ID - 1])
+        goal_zone = Point(goal_pos).buffer(self.tolerance)
+
+        if (self.collision_algorithm == 'stop&wait'): 
+
+            #Checks if AUV is at goal
+            if(goal_zone.contains(Point(init_pos)) and not self.last):
+                self.arrived = True
+            else: self.arrived = False
+            
+            if (any(self.collision_check) and not self.arrived):
+
+                section_req_aux = copy.copy(self.section_req)
+
+                section_req_aux.initial_latitude, section_req_aux.initial_longitude = self.ned2geodetic(init_pos)
+                section_req_aux.final_latitude, section_req_aux.final_longitude = self.ned2geodetic(self.collision_pos)
+                section_req_aux.tolerance_xy = 0
+
+                # Sends maintain position goal once
+                if self.once[0]:
+                    print("++++++++++++++++++++++++KEEPING POSITION++++++++++++++++++++++++") #A VECES HACE 2 PREEMPTED
+                    self.section_strategy.send_goal(section_req_aux)
+                    self.once[0] = False
+
+            elif not self.arrived:
+                if self.once[1]:
+                    print("++++++++++++++++++++++++HEADED TO GOAL++++++++++++++++++++++++") 
+                    self.section_strategy.cancel_goal()
+                    self.section_strategy.get_state()
+                    self.section_req.initial_latitude, self.section_req.initial_longitude = self.ned2geodetic(init_pos)
+                    self.section_strategy.send_goal(self.section_req)
+                    self.once[1] = False
+
+        elif (self.collision_algorithm == 'PF'):
 
             w1 = 1.0
             w2 = 2.0
 
-            goal_pos_x, goal_pos_y, _ = self.ned.geodetic2ned([self.section_req.final_latitude, self.section_req.final_longitude, 0])
-            goal_pos = np.array([goal_pos_x, goal_pos_y])
-            init_pos = np.array(self.robots_position[self.robot_ID - 1])
-
             #Checks if AUV is at goal
-            goal_zone = Point(goal_pos).buffer(2)
             if(goal_zone.contains(Point(init_pos)) and not self.last):
                 self.arrived = True
             else: self.arrived = False
@@ -190,9 +238,6 @@ class Robot:
 
             # publish the data
             self.send_body_velocity_req(Vx, Wz)
-
-        else: 
-            print("Within critical distance")
 
     def unit_vector(self, init_pos, final_pos):
         vector = final_pos - init_pos
@@ -243,6 +288,18 @@ class Robot:
         msg.twist.linear.x = Vx
         msg.twist.angular.z = Wz
         self.body_velocity_req_pub.publish(msg)
+
+    def send_polygon_stamped(self):
+        msg = PolygonStamped()
+        points = [Point32(), Point32(), Point32(), Point32(), Point32()]
+        for i in range(len(self.danger_zone_coords)):
+            points[i].x = self.danger_zone_coords[i,0]
+            points[i].y = self.danger_zone_coords[i,1]
+            points[i].z = self.navigation_depth
+        msg.polygon.points = points
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = "/world"
+        self.polygon_stamped_pub.publish(msg)
 
     def ned2geodetic(self, point):
         lat, lon, _ = self.ned.ned2geodetic([point[0], point[1], 0])

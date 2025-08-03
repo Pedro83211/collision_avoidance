@@ -25,7 +25,7 @@ class GenerateMission:
         self.number_of_cycles = 2 * math.sqrt(self.area_of_exploration) / self.dist_between_paths
 
         if self.number_of_robots > 1:
-            # Area of exploration gets smaller in proportion to the total number of robots in the system
+            # Area of exploration of each AUV gets smaller in proportion to the total number of robots in the system
             if self.number_of_robots % 2 == 0:
                 self.cycle_coeficient = self.number_of_robots / 2
             else:
@@ -53,9 +53,9 @@ class GenerateMission:
         versionElem = etree.SubElement(missionElem, "version")
         versionElem.text = "2.0"
 
-        for j in range(int(self.number_of_cycles) + 1):
-            rem = j % 4 # There are 4 types of movements: to the right, down from the right, to the left, down to the left
-            if j != 0:
+        for i in range(int(self.number_of_cycles) + 1):
+            rem = i % 4 # There are 4 types of movements: to the right, down from the right, to the left, down from the left
+            if i != 0:
                 if rem == 1:
                     if self.robot_ID % 2 == 0:
                         self.east += 5 * math.sqrt(self.area_of_exploration) / 8
@@ -69,7 +69,7 @@ class GenerateMission:
                 else:
                     self.north_rev -= self.dist_between_paths
             
-            if j == self.number_of_cycles:
+            if i == self.number_of_cycles:
                 self.last = 1
 
             lat, lon, _ = self.ned.ned2geodetic([self.east, self.north_rev, 0.0])

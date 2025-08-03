@@ -3,7 +3,7 @@
 # ---------------------------------------------------------
 
 #TOTAL number of robots
-number_of_robots: 2 
+number_of_robots: 2
 
 # NED origin definition
 ned_origin_lat: 39.543330
@@ -13,4 +13,4 @@ ned_origin_lon: 2.377940
 area_of_exploration: 400
 
 # Collision avoidance algorith to use {stop&wait, PF}
-collision_algorithm: 'PF'
+collision_algorithm: 'stop&wait'
