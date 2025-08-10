@@ -13,4 +13,4 @@ ned_origin_lon: 2.377940
 area_of_exploration: 400
 
 # Collision avoidance algorith to use {stop&wait, PF}
-collision_algorithm: 'stop&wait'
+collision_algorithm: 'PF'

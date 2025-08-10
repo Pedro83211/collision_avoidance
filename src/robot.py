@@ -49,7 +49,7 @@ class Robot:
         self.robots_orientation = []
         self.collision_check = []
         self.collision_pos = []
-        self.critical_dist = 10.0
+        self.critical_dist = 7.0
         self.arrived = True
         self.first_section = True
         self.first_collision = True
@@ -58,8 +58,12 @@ class Robot:
 
         # Define the main polygon object
         side = math.sqrt(self.area_of_exploration)/2 + self.tolerance
-        self.danger_zone_coords = np.array([[-side/3,-side], [-side/3,side], [side/3,side], [side/3,-side], [-side/3,-side]])
-        self.danger_zone = 0
+        self.danger_zone_coords = [[-side/3,-side], [-side/3,side], [side/3,side], [side/3,-side], [-side/3,-side]]
+
+        if self.collision_algorithm == 'stop&wait':
+            self.danger_zone = Polygon(self.danger_zone_coords)
+        elif self.collision_algorithm == 'PF':
+            self.danger_zone = Polygon()
 
         # Initialize arrays
         for robot in range(self.number_of_robots):
@@ -72,7 +76,7 @@ class Robot:
                                          BodyVelocityReq,
                                          queue_size=1)     #'/robot'+str(self.robot_ID)+'/travelled_distance' ,
         
-        self.polygon_stamped_pub = rospy.Publisher('/markers/danger_zone',
+        self.polygon_stamped_pub = rospy.Publisher('/sparus_' + str(self.robot_ID) + '/danger_zone',
                                          PolygonStamped,
                                          queue_size=1)  
         
@@ -148,10 +152,11 @@ class Robot:
     def check_collision(self, event):
         # Sets danger zone based on the algorithm used
         if self.collision_algorithm == 'stop&wait':
-            self.danger_zone = Polygon(self.danger_zone_coords)
             self.send_polygon_stamped()
         elif self.collision_algorithm == 'PF':
             self.danger_zone = Point(self.robots_position[self.robot_ID - 1]).buffer(self.critical_dist)
+        
+        self.send_polygon_stamped()
 
         # Fills a boolean array with collision detection for each robot
         for robot in range(self.number_of_robots):
@@ -164,7 +169,7 @@ class Robot:
             self.arrived = False
             if(self.first_collision):
                 self.collision_pos = self.robots_position[self.robot_ID - 1]
-                print("++++++++++++++++++++++++CANCELLING GOALS++++++++++++++++++++++++")
+                print("++++++++++++++++++++++++SPARUS " + str(self.robot_ID) + ": " "CANCELLING GOALS++++++++++++++++++++++++")
                 self.section_strategy.cancel_goal()
                 self.first_collision = False
                 self.once = [True, True]
@@ -198,13 +203,13 @@ class Robot:
 
                 # Sends maintain position goal once
                 if self.once[0]:
-                    print("++++++++++++++++++++++++KEEPING POSITION++++++++++++++++++++++++") #A VECES HACE 2 PREEMPTED
+                    print("++++++++++++++++++++++++SPARUS " + str(self.robot_ID) + ": " "KEEPING POSITION++++++++++++++++++++++++")
                     self.section_strategy.send_goal(section_req_aux)
                     self.once[0] = False
 
             elif not self.arrived:
                 if self.once[1]:
-                    print("++++++++++++++++++++++++HEADED TO GOAL++++++++++++++++++++++++") 
+                    print("++++++++++++++++++++++++SPARUS " + str(self.robot_ID) + ": " "HEADED TO GOAL++++++++++++++++++++++++") 
                     self.section_strategy.cancel_goal()
                     self.section_strategy.get_state()
                     self.section_req.initial_latitude, self.section_req.initial_longitude = self.ned2geodetic(init_pos)
@@ -291,10 +296,11 @@ class Robot:
 
     def send_polygon_stamped(self):
         msg = PolygonStamped()
-        points = [Point32(), Point32(), Point32(), Point32(), Point32()]
-        for i in range(len(self.danger_zone_coords)):
-            points[i].x = self.danger_zone_coords[i,0]
-            points[i].y = self.danger_zone_coords[i,1]
+        points = []
+        for i in range(len(self.danger_zone.exterior.coords.xy[1])): 
+            points.append(Point32())
+            points[i].x = self.danger_zone.exterior.coords.xy[0][i]
+            points[i].y = -self.danger_zone.exterior.coords.xy[1][i]
             points[i].z = self.navigation_depth
         msg.polygon.points = points
         msg.header.stamp = rospy.Time.now()
