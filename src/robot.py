@@ -13,7 +13,8 @@ from cola2_msgs.msg import GoalDescriptor, CaptainStatus, CaptainStateFeedback
 from cola2_msgs.msg import PilotActionResult, PilotAction, PilotGoal
 from cola2_msgs.msg import NavSts
 from cola2_msgs.msg import BodyVelocityReq
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Polygon, LineString, Point
+from shapely.ops import split
 import numpy as np
 import copy
 from geometry_msgs.msg import PolygonStamped, Point32
@@ -21,6 +22,10 @@ from geometry_msgs.msg import PolygonStamped, Point32
 class Robot:
 
     def __init__(self, name):
+
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # ++++++++++++++++++++++++++++SYSTEM CONSTANTS++++++++++++++++++++++++++++
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         self.name = name
         self.tolerance = self.get_param('tolerance',1)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
@@ -35,6 +40,10 @@ class Robot:
         self.robot_name = self.get_param('~robot_name','sparus')
         self.collision_algorithm = self.get_param('collision_algorithm', 'stop&wait')
         self.area_of_exploration = self.get_param('area_of_exploration', 400)
+
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # ++++++++++++++++++++++++++++SYSTEM VARIABLES++++++++++++++++++++++++++++
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         self.distance = []
         self.travelled_distance = []
         self.robots_travelled_distances = [0,0,0,0,0,0]
@@ -56,20 +65,41 @@ class Robot:
         self.once = [True, True]
         self.last = False
 
-        # Define the main polygon object
-        side = math.sqrt(self.area_of_exploration)/2 + self.tolerance
-        self.danger_zone_coords = [[-side/3,-side], [-side/3,side], [side/3,side], [side/3,-side], [-side/3,-side]]
-
-        if self.collision_algorithm == 'stop&wait':
-            self.danger_zone = Polygon(self.danger_zone_coords)
-        elif self.collision_algorithm == 'PF':
-            self.danger_zone = Polygon()
-
         # Initialize arrays
         for robot in range(self.number_of_robots):
             self.robots_position.append(robot_data) #set the self.robots_position initialized to 0
             self.robots_orientation.append([0]) #set the self.robots_orientation initialized to 0
             self.collision_check.append(False)
+          
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # +++++++++++++++++++++++DANGER ZONE INITIALIZATION+++++++++++++++++++++++
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        if self.collision_algorithm == 'stop&wait':
+            half_side = math.sqrt(self.area_of_exploration)/2
+            self.danger_zone_coords = [[-half_side/3,-half_side], [-half_side/3,half_side], [half_side/3,half_side], 
+                                       [half_side/3,-half_side], [-half_side/3,-half_side]]
+            danger_polygon = Polygon(self.danger_zone_coords)
+            
+            # Split danger zone depending on the number of robots             
+            if self.number_of_robots > 2:
+                danger_zone_array = []
+                zones_num = math.ceil(self.number_of_robots/2)
+
+                for i in range(math.ceil(self.number_of_robots/2 - 1)):
+                    split_line = LineString([(-half_side, half_side - half_side*2*(i + 1)/zones_num), (half_side, half_side - half_side*2*(i + 1)/zones_num)])
+                    danger_zone_array.append(split(danger_polygon, split_line).geoms[1])
+                    danger_polygon = split(danger_polygon, split_line).geoms[0]
+                
+                danger_zone_array.append(danger_polygon)
+
+                self.danger_zone = Polygon(danger_zone_array[math.floor((self.robot_ID - 1) / 2)]).buffer(self.tolerance/2, join_style=2)
+
+        elif self.collision_algorithm == 'PF':
+            self.danger_zone = Polygon()
+
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # ++++++++++++++++++++++++ROS COMPONENTS DEFINITION+++++++++++++++++++++++
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         # Publishers
         self.body_velocity_req_pub = rospy.Publisher('/sparus_' + str(self.robot_ID) + '/controller/body_velocity_req',
@@ -93,6 +123,10 @@ class Robot:
         
         # Init periodic timers
         rospy.Timer(rospy.Duration(0.03), self.check_collision)
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++AUXILIARY FUNCTIONS+++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     def send_section_strategy(self,initial_point,final_point,robot_id,last):
 
@@ -150,12 +184,11 @@ class Robot:
             self.robots_orientation[frame_id - 1] = msg.orientation.yaw
 
     def check_collision(self, event):
-        # Sets danger zone based on the algorithm used
-        if self.collision_algorithm == 'stop&wait':
-            self.send_polygon_stamped()
-        elif self.collision_algorithm == 'PF':
+        # Sets the potential field danger zone
+        if self.collision_algorithm == 'PF':
             self.danger_zone = Point(self.robots_position[self.robot_ID - 1]).buffer(self.critical_dist)
         
+        # Sends danger zone coordinates to RViz
         self.send_polygon_stamped()
 
         # Fills a boolean array with collision detection for each robot
@@ -236,13 +269,13 @@ class Robot:
 
             ang_err = self.angle_correction(angle)
 
-            Wz = ang_err * 0.7
+            Wy = ang_err * 0.7
 
             if (abs(ang_err) > pi/4): Vx = 0
             else: Vx = self.surge_velocity
 
             # publish the data
-            self.send_body_velocity_req(Vx, Wz)
+            self.send_body_velocity_req(Vx, Wy)
 
     def unit_vector(self, init_pos, final_pos):
         vector = final_pos - init_pos
@@ -259,10 +292,10 @@ class Robot:
                 obs_pos = np.array(self.robots_position[robot])
                 obs_dist = np.linalg.norm(init_pos - obs_pos)
 
-                K = (self.critical_dist - obs_dist) / self.critical_dist
+                k = (self.critical_dist - obs_dist) / self.critical_dist
                 print("Within critical distance")
 
-                obs_vector += K * self.unit_vector(obs_pos, init_pos)
+                obs_vector += k * self.unit_vector(obs_pos, init_pos)
 
         return obs_vector
 
@@ -285,13 +318,13 @@ class Robot:
     #Args are: [header.seq header.stamp header.frame_id goal.requester goal.priority 
     #           twist.linear.x twist.linear.y twist.linear.z twist.angular.x twist.angular.y twist.angular.z 
     #           disable_axis.x  .y disable_axis.z disable_axis.roll disable_axis.pitch disable_axis.yaw]
-    def send_body_velocity_req(self, Vx, Wz):
+    def send_body_velocity_req(self, Vx, Wy):
         msg = BodyVelocityReq()
         msg.header.stamp = rospy.Time.now()
         msg.goal.requester = rospy.get_name()
         msg.goal.priority = GoalDescriptor.PRIORITY_SAFETY_HIGH
         msg.twist.linear.x = Vx
-        msg.twist.angular.z = Wz
+        msg.twist.angular.z = Wy
         self.body_velocity_req_pub.publish(msg)
 
     def send_polygon_stamped(self):

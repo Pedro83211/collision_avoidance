@@ -3,7 +3,7 @@
 # ---------------------------------------------------------
 
 #TOTAL number of robots
-number_of_robots: 2
+number_of_robots: 6
 
 # NED origin definition
 ned_origin_lat: 39.543330
@@ -12,5 +12,21 @@ ned_origin_lon: 2.377940
 # Area of the square of exploration (m^2)
 area_of_exploration: 400
 
-# Collision avoidance algorith to use {stop&wait, PF}
-collision_algorithm: 'PF'
+# Collision avoidance algorith to use: {stop&wait, PF}
+collision_algorithm: 'stop&wait'
+
+# Stop and wait parameters
+
+# Width of danger zone window = danger_zone_side/reduction_coefficient
+reduction_coefficient: 3
+
+# Potential Field parameters
+
+# Proportional control value of yaw angular velocity
+k_th: 0.7
+
+# Goal weight (w1)
+goal_weight: 1
+
+# Obstacle weight (w2)
+obstacle weight: 2 
