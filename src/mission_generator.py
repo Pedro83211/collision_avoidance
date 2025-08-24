@@ -1,7 +1,6 @@
 import rospy
 import math
 from cola2.utils.ned import NED
-import xml.etree.ElementTree as ET
 from lxml import etree
 
 class GenerateMission:
@@ -14,65 +13,66 @@ class GenerateMission:
         self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  #NED frame
         self.area_of_exploration = self.get_param('area_of_exploration', 400)
         self.mission_path = self.get_param('mission',"/home/pedro/catkin_ws/src/collision_avoidance/missions/mission_" + str(self.robot_ID) + ".xml")
-        self.dist_between_paths = 5
-        self.cycle_coeficient = 1
+        self.dist_between_paths = self.get_param('distance_between_paths', 5.0)
+        self.side = math.sqrt(self.area_of_exploration)
+        self.cycle_coefficient = 1
         self.east = 0
-        self.north_rev = 0
+        self.north = 0
         self.last = 0
 
         # Set the number of cycles needed to cover the height of the square of exploration knowing that a cycle is
-        # formed by 2 movements
-        self.number_of_cycles = 2 * math.sqrt(self.area_of_exploration) / self.dist_between_paths
+        # formed by 2 movements, except the first and the last cycles, being only one movement each
 
         if self.number_of_robots > 1:
             # Area of exploration of each AUV gets smaller in proportion to the total number of robots in the system
             if self.number_of_robots % 2 == 0:
-                self.cycle_coeficient = self.number_of_robots / 2
+                self.cycle_coefficient = self.number_of_robots / 2
             else:
-                if self.robot_ID % 2 == 0:
-                    self.cycle_coeficient = (self.number_of_robots - 1) / 2
+                if self.robot_ID % 2 != 0:
+                    self.cycle_coefficient = (self.number_of_robots - 1) / 2
                 else:
-                    self.cycle_coeficient = (self.number_of_robots + 1) / 2
-            
-            self.number_of_cycles /= self.cycle_coeficient
+                    self.cycle_coefficient = (self.number_of_robots + 1) / 2
+    
         else:
-            self.cycle_coeficient = 1
+            self.cycle_coefficient = 1
         
-
-        if self.robot_ID % 2 == 0:
-            self.east = -math.sqrt(self.area_of_exploration) / 2
-            self.north_rev = math.sqrt(self.area_of_exploration) * (self.cycle_coeficient - 2 * (self.robot_ID / 2 - 1)) / (2 * self.cycle_coeficient)              
+        self.number_of_cycles = self.side / (2 * self.dist_between_paths * self.cycle_coefficient)
+        
+        # Set the initial point of each AUV depending on its ID
+        if self.robot_ID % 2 != 0:
+            self.east = -self.side / 2             
         else:
-            self.east = math.sqrt(self.area_of_exploration) / 2
-            self.north_rev = math.sqrt(self.area_of_exploration) * (self.cycle_coeficient - 2 * ((self.robot_ID + 1) / 2 - 1)) / (2 * self.cycle_coeficient)
+            self.east = self.side / 2
+
+        self.north = self.side * (self.cycle_coefficient - 2 * math.floor(self.robot_ID / 2)) / (2 * self.cycle_coefficient)
+        
 
         missionElem = etree.Element("mission")
 
         doc = etree.ElementTree(missionElem)
-        
-        versionElem = etree.SubElement(missionElem, "version")
-        versionElem.text = "2.0"
 
-        for i in range(int(self.number_of_cycles) + 1):
+        number_of_moves = round(self.number_of_cycles * 4) + 1
+
+        if (self.robot_ID == self.number_of_robots - 1):
+            number_of_moves += 1
+
+        for i in range(number_of_moves):
             rem = i % 4 # There are 4 types of movements: to the right, down from the right, to the left, down from the left
             if i != 0:
                 if rem == 1:
-                    if self.robot_ID % 2 == 0:
-                        self.east += 5 * math.sqrt(self.area_of_exploration) / 8
+                    if self.robot_ID % 2 != 0:
+                        self.east += 5 * self.side / 8
                     else:
-                        self.east -= 5 * math.sqrt(self.area_of_exploration) / 8
+                        self.east -= 5 * self.side / 8
                 elif rem == 3:
-                    if self.robot_ID % 2 == 0:
-                        self.east -= 5 * math.sqrt(self.area_of_exploration) / 8
+                    if self.robot_ID % 2 != 0:
+                        self.east -= 5 * self.side / 8
                     else:
-                        self.east += 5 * math.sqrt(self.area_of_exploration) / 8
+                        self.east += 5 * self.side / 8
                 else:
-                    self.north_rev -= self.dist_between_paths
-            
-            if i == self.number_of_cycles:
-                self.last = 1
+                    self.north -= self.dist_between_paths
 
-            lat, lon, _ = self.ned.ned2geodetic([self.east, self.north_rev, 0.0])
+            lat, lon, _ = self.ned.ned2geodetic([self.east, self.north, 0.0])
 
             mission_stepElem = etree.SubElement(missionElem, "mission_step")
 
@@ -83,27 +83,6 @@ class GenerateMission:
 
             final_longitudeElem = etree.SubElement(maneuverElem,"final_longitude")
             final_longitudeElem.text = str(lon)
-
-            final_depthElem = etree.SubElement(maneuverElem,"final_depth")
-            final_depthElem.text = "0"
-
-            final_altitudeElem = etree.SubElement(maneuverElem,"final_altitude")
-            final_altitudeElem.text = "1.0"
-
-            heave_modeElem = etree.SubElement(maneuverElem,"heave_mode")
-            heave_modeElem.text = "0"
-
-            surge_velocityElem = etree.SubElement(maneuverElem,"surge_velocity")
-            surge_velocityElem.text = "0.5"
-
-            tolerance_xyElem = etree.SubElement(maneuverElem,"tolerance_xy")
-            tolerance_xyElem.text = "1"
-
-            no_altitude_goes_upElem = etree.SubElement(maneuverElem,"no_altitude_goes_up")
-            no_altitude_goes_upElem.text = "true"
-
-            last_sectionElem = etree.SubElement(maneuverElem,"last_section")
-            last_sectionElem.text = str(self.last)
 
         outFile = open(self.mission_path, "wb")
         doc.write(outFile, pretty_print=True, xml_declaration=True, encoding='utf-8')

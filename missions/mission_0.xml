@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mission>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.543420069036934</final_latitude>
+      <final_longitude>2.3780563333456017</final_longitude>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.5433074826646</final_latitude>
+      <final_longitude>2.3780563331576254</final_longitude>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.543307482708265</final_latitude>
+      <final_longitude>2.377998166578813</final_longitude>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54342006908059</final_latitude>
+      <final_longitude>2.377998166672801</final_longitude>
+    </maneuver>
+  </mission_step>
+</mission>

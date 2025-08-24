@@ -71,10 +71,178 @@ Visualization Manager:
       Displays:
         - Class: rviz/Marker
           Enabled: true
+          Marker Topic: /sparus_0/virtual_cage/cage_marker
+          Name: virtual_cage
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: true
+        - Class: rviz/Marker
+          Enabled: false
+          Marker Topic: /sparus_1/pilot/waypoint_marker
+          Name: pilot_waypoint
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+        - Alpha: 1
+          Class: rviz/PointStamped
+          Color: 204; 41; 204
+          Enabled: true
+          History Length: 1
+          Name: pilot_goal
+          Queue Size: 10
+          Radius: 0.20000000298023224
+          Topic: /sparus_0/pilot/goal
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 25; 255; 0
+          Enabled: false
+          Head Diameter: 0.30000001192092896
+          Head Length: 0.20000000298023224
+          Length: 0.30000001192092896
+          Line Style: Lines
+          Line Width: 0.029999999329447746
+          Name: trajectory_path
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Pose Color: 255; 85; 255
+          Pose Style: None
+          Queue Size: 10
+          Radius: 0.029999999329447746
+          Shaft Diameter: 0.10000000149011612
+          Shaft Length: 0.10000000149011612
+          Topic: /sparus_1/captain/trajectory_path
+          Unreliable: false
+          Value: false
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz/Range
+          Color: 255; 255; 255
+          Enabled: false
+          Name: altitude
+          Queue Size: 100
+          Topic: /sparus_1/navigator/altitude
+          Unreliable: false
+          Value: false
+        - Angle Tolerance: 0.10000000149011612
+          Class: rviz/Odometry
+          Covariance:
+            Orientation:
+              Alpha: 0.5
+              Color: 255; 255; 127
+              Color Style: Unique
+              Frame: Local
+              Offset: 1
+              Scale: 1
+              Value: true
+            Position:
+              Alpha: 0.30000001192092896
+              Color: 204; 51; 204
+              Scale: 1
+              Value: true
+            Value: true
+          Enabled: false
+          Keep: 100
+          Name: simulated_odometry
+          Position Tolerance: 0.10000000149011612
+          Queue Size: 10
+          Shape:
+            Alpha: 1
+            Axes Length: 1
+            Axes Radius: 0.10000000149011612
+            Color: 255; 25; 0
+            Head Length: 0.30000001192092896
+            Head Radius: 0.10000000149011612
+            Shaft Length: 1
+            Shaft Radius: 0.05000000074505806
+            Value: Arrow
+          Topic: /sparus_1/dynamics/odometry
+          Unreliable: false
+          Value: false
+        - Class: rviz/MarkerArray
+          Enabled: false
+          Marker Topic: /sparus_1/navigator/markers/landmarks
+          Name: navigator_landmarks
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+        - Angle Tolerance: 0.10000000149011612
+          Class: rviz/Odometry
+          Covariance:
+            Orientation:
+              Alpha: 0.5
+              Color: 255; 255; 127
+              Color Style: Unique
+              Frame: Local
+              Offset: 1
+              Scale: 1
+              Value: true
+            Position:
+              Alpha: 0.30000001192092896
+              Color: 204; 51; 204
+              Scale: 1
+              Value: true
+            Value: true
+          Enabled: false
+          Keep: 100
+          Name: navigator_odometry
+          Position Tolerance: 0.10000000149011612
+          Queue Size: 10
+          Shape:
+            Alpha: 1
+            Axes Length: 1
+            Axes Radius: 0.10000000149011612
+            Color: 255; 25; 0
+            Head Length: 0.30000001192092896
+            Head Radius: 0.10000000149011612
+            Shaft Length: 1
+            Shaft Radius: 0.05000000074505806
+            Value: Arrow
+          Topic: /sparus_1/navigator/odometry
+          Unreliable: false
+          Value: false
+        - Alpha: 1
+          Class: rviz/RobotModel
+          Collision Enabled: false
+          Enabled: true
+          Links:
+            All Links Enabled: true
+            Expand Joint Details: false
+            Expand Link Details: false
+            Expand Tree: false
+            Link Tree Style: Links in Alphabetic Order
+          Name: robot_model
+          Robot Description: sparus_0/robot_description
+          TF Prefix: ""
+          Update Interval: 0
+          Value: true
+          Visual Enabled: true
+        - Alpha: 1
+          Class: rviz/Axes
+          Enabled: true
+          Length: 1
+          Name: robot_axes
+          Radius: 0.10000000149011612
+          Reference Frame: sparus_0/base_link
+          Show Trail: false
+          Value: true
+      Enabled: true
+      Name: Sparus_0
+    - Class: rviz/Group
+      Displays:
+        - Class: rviz/Marker
+          Enabled: true
           Marker Topic: /sparus_1/virtual_cage/cage_marker
           Name: virtual_cage
           Namespaces:
-            virtual_cage: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -218,47 +386,6 @@ Visualization Manager:
             Expand Link Details: false
             Expand Tree: false
             Link Tree Style: Links in Alphabetic Order
-            sparus_1/base_link:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            sparus_1/dvl:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_1/dvl_altitude:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_1/gps:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_1/imu:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_1/imu_filter:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_1/pressure:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_1/thruster_0:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_1/thruster_1:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_1/thruster_2:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
           Name: robot_model
           Robot Description: sparus_1/robot_description
           TF Prefix: ""
@@ -283,7 +410,7 @@ Visualization Manager:
           Marker Topic: /sparus_2/virtual_cage/cage_marker
           Name: virtual_cage
           Namespaces:
-            virtual_cage: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -427,47 +554,6 @@ Visualization Manager:
             Expand Link Details: false
             Expand Tree: false
             Link Tree Style: Links in Alphabetic Order
-            sparus_2/base_link:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            sparus_2/dvl:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_2/dvl_altitude:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_2/gps:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_2/imu:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_2/imu_filter:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_2/pressure:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_2/thruster_0:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_2/thruster_1:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_2/thruster_2:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
           Name: robot_model
           Robot Description: sparus_2/robot_description
           TF Prefix: ""
@@ -492,7 +578,7 @@ Visualization Manager:
           Marker Topic: /sparus_2/virtual_cage/cage_marker
           Name: virtual_cage
           Namespaces:
-            virtual_cage: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -636,47 +722,6 @@ Visualization Manager:
             Expand Link Details: false
             Expand Tree: false
             Link Tree Style: Links in Alphabetic Order
-            sparus_3/base_link:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            sparus_3/dvl:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_3/dvl_altitude:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_3/gps:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_3/imu:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_3/imu_filter:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_3/pressure:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_3/thruster_0:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_3/thruster_1:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_3/thruster_2:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
           Name: robot_model
           Robot Description: sparus_3/robot_description
           TF Prefix: ""
@@ -701,7 +746,7 @@ Visualization Manager:
           Marker Topic: /sparus_4/virtual_cage/cage_marker
           Name: virtual_cage
           Namespaces:
-            virtual_cage: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -845,47 +890,6 @@ Visualization Manager:
             Expand Link Details: false
             Expand Tree: false
             Link Tree Style: Links in Alphabetic Order
-            sparus_4/base_link:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            sparus_4/dvl:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_4/dvl_altitude:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_4/gps:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_4/imu:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_4/imu_filter:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_4/pressure:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_4/thruster_0:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_4/thruster_1:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_4/thruster_2:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
           Name: robot_model
           Robot Description: sparus_4/robot_description
           TF Prefix: ""
@@ -910,7 +914,7 @@ Visualization Manager:
           Marker Topic: /sparus_5/virtual_cage/cage_marker
           Name: virtual_cage
           Namespaces:
-            virtual_cage: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -1054,47 +1058,6 @@ Visualization Manager:
             Expand Link Details: false
             Expand Tree: false
             Link Tree Style: Links in Alphabetic Order
-            sparus_5/base_link:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            sparus_5/dvl:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_5/dvl_altitude:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_5/gps:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_5/imu:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_5/imu_filter:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_5/pressure:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_5/thruster_0:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_5/thruster_1:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_5/thruster_2:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
           Name: robot_model
           Robot Description: sparus_5/robot_description
           TF Prefix: ""
@@ -1112,215 +1075,15 @@ Visualization Manager:
           Value: true
       Enabled: true
       Name: Sparus_5
-    - Class: rviz/Group
-      Displays:
-        - Class: rviz/Marker
-          Enabled: true
-          Marker Topic: /sparus_6/virtual_cage/cage_marker
-          Name: virtual_cage
-          Namespaces:
-            virtual_cage: true
-          Queue Size: 100
-          Value: true
-        - Class: rviz/Marker
-          Enabled: false
-          Marker Topic: /sparus_2/pilot/waypoint_marker
-          Name: pilot_waypoint
-          Namespaces:
-            {}
-          Queue Size: 100
-          Value: false
-        - Alpha: 1
-          Class: rviz/PointStamped
-          Color: 204; 41; 204
-          Enabled: true
-          History Length: 1
-          Name: pilot_goal
-          Queue Size: 10
-          Radius: 0.20000000298023224
-          Topic: /sparus_6/pilot/goal
-          Unreliable: false
-          Value: true
-        - Alpha: 1
-          Buffer Length: 1
-          Class: rviz/Path
-          Color: 25; 255; 0
-          Enabled: false
-          Head Diameter: 0.30000001192092896
-          Head Length: 0.20000000298023224
-          Length: 0.30000001192092896
-          Line Style: Lines
-          Line Width: 0.029999999329447746
-          Name: trajectory_path
-          Offset:
-            X: 0
-            Y: 0
-            Z: 0
-          Pose Color: 255; 85; 255
-          Pose Style: None
-          Queue Size: 10
-          Radius: 0.029999999329447746
-          Shaft Diameter: 0.10000000149011612
-          Shaft Length: 0.10000000149011612
-          Topic: /sparus_2/captain/trajectory_path
-          Unreliable: false
-          Value: false
-        - Alpha: 0.5
-          Buffer Length: 1
-          Class: rviz/Range
-          Color: 255; 255; 255
-          Enabled: false
-          Name: altitude
-          Queue Size: 100
-          Topic: /sparus_2/navigator/altitude
-          Unreliable: false
-          Value: false
-        - Angle Tolerance: 0.10000000149011612
-          Class: rviz/Odometry
-          Covariance:
-            Orientation:
-              Alpha: 0.5
-              Color: 255; 255; 127
-              Color Style: Unique
-              Frame: Local
-              Offset: 1
-              Scale: 1
-              Value: true
-            Position:
-              Alpha: 0.30000001192092896
-              Color: 204; 51; 204
-              Scale: 1
-              Value: true
-            Value: true
-          Enabled: false
-          Keep: 100
-          Name: simulated_odometry
-          Position Tolerance: 0.10000000149011612
-          Queue Size: 10
-          Shape:
-            Alpha: 1
-            Axes Length: 1
-            Axes Radius: 0.10000000149011612
-            Color: 255; 25; 0
-            Head Length: 0.30000001192092896
-            Head Radius: 0.10000000149011612
-            Shaft Length: 1
-            Shaft Radius: 0.05000000074505806
-            Value: Arrow
-          Topic: /sparus_2/dynamics/odometry
-          Unreliable: false
-          Value: false
-        - Class: rviz/MarkerArray
-          Enabled: false
-          Marker Topic: /sparus_2/navigator/markers/landmarks
-          Name: navigator_landmarks
-          Namespaces:
-            {}
-          Queue Size: 100
-          Value: false
-        - Angle Tolerance: 0.10000000149011612
-          Class: rviz/Odometry
-          Covariance:
-            Orientation:
-              Alpha: 0.5
-              Color: 255; 255; 127
-              Color Style: Unique
-              Frame: Local
-              Offset: 1
-              Scale: 1
-              Value: true
-            Position:
-              Alpha: 0.30000001192092896
-              Color: 204; 51; 204
-              Scale: 1
-              Value: true
-            Value: true
-          Enabled: false
-          Keep: 100
-          Name: navigator_odometry
-          Position Tolerance: 0.10000000149011612
-          Queue Size: 10
-          Shape:
-            Alpha: 1
-            Axes Length: 1
-            Axes Radius: 0.10000000149011612
-            Color: 255; 25; 0
-            Head Length: 0.30000001192092896
-            Head Radius: 0.10000000149011612
-            Shaft Length: 1
-            Shaft Radius: 0.05000000074505806
-            Value: Arrow
-          Topic: /sparus_2/navigator/odometry
-          Unreliable: false
-          Value: false
-        - Alpha: 1
-          Class: rviz/RobotModel
-          Collision Enabled: false
-          Enabled: true
-          Links:
-            All Links Enabled: true
-            Expand Joint Details: false
-            Expand Link Details: false
-            Expand Tree: false
-            Link Tree Style: Links in Alphabetic Order
-            sparus_6/base_link:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            sparus_6/dvl:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_6/dvl_altitude:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_6/gps:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_6/imu:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_6/imu_filter:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_6/pressure:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_6/thruster_0:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_6/thruster_1:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            sparus_6/thruster_2:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-          Name: robot_model
-          Robot Description: sparus_6/robot_description
-          TF Prefix: ""
-          Update Interval: 0
-          Value: true
-          Visual Enabled: true
-        - Alpha: 1
-          Class: rviz/Axes
-          Enabled: true
-          Length: 1
-          Name: robot_axes
-          Radius: 0.10000000149011612
-          Reference Frame: sparus_6/base_link
-          Show Trail: false
-          Value: true
+    - Alpha: 1
+      Class: rviz/Polygon
+      Color: 204; 0; 0
       Enabled: true
-      Name: Sparus_6
+      Name: Danger_zone_0
+      Queue Size: 100
+      Topic: /sparus_0/danger_zone
+      Unreliable: false
+      Value: true
     - Alpha: 1
       Class: rviz/Polygon
       Color: 204; 0; 0
@@ -1366,15 +1129,6 @@ Visualization Manager:
       Topic: /sparus_5/danger_zone
       Unreliable: false
       Value: true
-    - Alpha: 1
-      Class: rviz/Polygon
-      Color: 204; 0; 0
-      Enabled: true
-      Name: Danger_zone_6
-      Queue Size: 100
-      Topic: /sparus_6/danger_zone
-      Unreliable: false
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 165; 165; 165
@@ -1389,7 +1143,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 80.580810546875
+      Distance: 48.83415603637695
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

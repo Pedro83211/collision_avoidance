@@ -1,43 +1,27 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mission>
-  <version>2.0</version>
   <mission_step>
     <maneuver type="section">
-      <final_latitude>39.54323993084016</final_latitude>
-      <final_longitude>2.3780563330448397</final_longitude>
-      <final_depth>0</final_depth>
-      <final_altitude>1.0</final_altitude>
-      <heave_mode>0</heave_mode>
-      <surge_velocity>0.5</surge_velocity>
-      <tolerance_xy>1</tolerance_xy>
-      <no_altitude_goes_up>true</no_altitude_goes_up>
-      <last_section>0</last_section>
+      <final_latitude>39.543420069088675</final_latitude>
+      <final_longitude>2.3779787777818675</final_longitude>
     </maneuver>
   </mission_step>
   <mission_step>
     <maneuver type="section">
-      <final_latitude>39.54335251721379</final_latitude>
-      <final_longitude>2.378056333232816</final_longitude>
-      <final_depth>0</final_depth>
-      <final_altitude>1.0</final_altitude>
-      <heave_mode>0</heave_mode>
-      <surge_velocity>0.5</surge_velocity>
-      <tolerance_xy>1</tolerance_xy>
-      <no_altitude_goes_up>true</no_altitude_goes_up>
-      <last_section>0</last_section>
+      <final_latitude>39.543307482716344</final_latitude>
+      <final_longitude>2.3779787777192083</final_longitude>
     </maneuver>
   </mission_step>
   <mission_step>
     <maneuver type="section">
-      <final_latitude>39.54335251725745</final_latitude>
-      <final_longitude>2.377998166616408</final_longitude>
-      <final_depth>0</final_depth>
-      <final_altitude>1.0</final_altitude>
-      <heave_mode>0</heave_mode>
-      <surge_velocity>0.5</surge_velocity>
-      <tolerance_xy>1</tolerance_xy>
-      <no_altitude_goes_up>true</no_altitude_goes_up>
-      <last_section>0</last_section>
+      <final_latitude>39.5433074827212</final_latitude>
+      <final_longitude>2.3779206111403957</final_longitude>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54342006909353</final_latitude>
+      <final_longitude>2.3779206111090665</final_longitude>
     </maneuver>
   </mission_step>
 </mission>

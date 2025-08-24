@@ -23,7 +23,7 @@ class CollisionAvoidance:
             NavSts,
             self.update_robot_position) 
         
-        rospy.sleep(10)
+        rospy.sleep(10 + self.robot_ID * 5)
 
         self.mission_steps()
 
@@ -37,9 +37,6 @@ class CollisionAvoidance:
             for mission_step in root.findall("mission_step"):
                 maneuver = mission_step.find("maneuver")
 
-                last_str = maneuver.find("last_section")
-                last = bool(int(last_str.text))
-
                 # Extraer final_latitude y final_longitude si están presentes
                 initial_point = self.robot_handler.ned2geodetic(self.robot_position)
 
@@ -48,7 +45,7 @@ class CollisionAvoidance:
                 final_point = (float(final_lat.text), float(final_lon.text))
 
                 if final_lat is not None and final_lon is not None:
-                    self.robot_handler.send_section_strategy(initial_point, final_point, self.robot_ID, last)
+                    self.robot_handler.send_section_strategy(initial_point, final_point)
 
         except ET.ParseError as e:
             print(f"Error al analizar el archivo XML: {e}")
@@ -72,7 +69,9 @@ class CollisionAvoidance:
 if __name__ == '__main__':
     try:
         rospy.init_node('collision_avoidance')
+        init_time = rospy.get_time()
         AUVs = CollisionAvoidance(rospy.get_name())
+        print("Mission completed in: " + str(rospy.get_time() - init_time) + " seconds")
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
