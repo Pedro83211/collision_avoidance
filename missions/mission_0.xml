@@ -2,26 +2,142 @@
 <mission>
   <mission_step>
     <maneuver type="section">
-      <final_latitude>39.543420069036934</final_latitude>
-      <final_longitude>2.3780563333456017</final_longitude>
+      <final_latitude>39.54351013795857</final_latitude>
+      <final_longitude>2.3781726669919663</final_longitude>
+      <last_section>0</last_section>
     </maneuver>
   </mission_step>
   <mission_step>
     <maneuver type="section">
-      <final_latitude>39.5433074826646</final_latitude>
-      <final_longitude>2.3780563331576254</final_longitude>
+      <final_latitude>39.54328496521522</final_latitude>
+      <final_longitude>2.3781726662400593</final_longitude>
+      <last_section>0</last_section>
     </maneuver>
   </mission_step>
   <mission_step>
     <maneuver type="section">
-      <final_latitude>39.543307482708265</final_latitude>
-      <final_longitude>2.377998166578813</final_longitude>
+      <final_latitude>39.543284965307215</final_latitude>
+      <final_longitude>2.378120962631158</final_longitude>
+      <last_section>0</last_section>
     </maneuver>
   </mission_step>
   <mission_step>
     <maneuver type="section">
-      <final_latitude>39.54342006908059</final_latitude>
-      <final_longitude>2.377998166672801</final_longitude>
+      <final_latitude>39.54351013805057</final_latitude>
+      <final_longitude>2.3781209632159745</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54351013811955</final_latitude>
+      <final_longitude>2.378069259439982</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.543284965376216</final_latitude>
+      <final_longitude>2.3780692590222556</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54328496542222</final_latitude>
+      <final_longitude>2.3780175554133534</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54351013816556</final_latitude>
+      <final_longitude>2.378017555663989</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54351013818856</final_latitude>
+      <final_longitude>2.3779658518879967</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54328496544521</final_latitude>
+      <final_longitude>2.377965851804451</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54328496544521</final_latitude>
+      <final_longitude>2.377914148195549</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54351013818856</final_latitude>
+      <final_longitude>2.377914148112003</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54351013816556</final_latitude>
+      <final_longitude>2.3778624443360106</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54328496542222</final_latitude>
+      <final_longitude>2.377862444586646</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.543284965376216</final_latitude>
+      <final_longitude>2.377810740977744</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.543510138119565</final_latitude>
+      <final_longitude>2.377810740560018</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54351013805056</final_latitude>
+      <final_longitude>2.3777590367840253</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.543284965307215</final_latitude>
+      <final_longitude>2.377759037368842</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54328496521522</final_latitude>
+      <final_longitude>2.37770733375994</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54351013795856</final_latitude>
+      <final_longitude>2.377707333008033</final_longitude>
+      <last_section>0</last_section>
     </maneuver>
   </mission_step>
 </mission>

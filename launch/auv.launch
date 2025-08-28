@@ -3,7 +3,7 @@
   <arg name="enableRviz" default="true"/>
   <arg name="mrs" default="true"/>
   <arg name="cola2_architecture" default="true"/>
-  <arg name="number_of_robots" default="6"/> 
+  <arg name="number_of_robots" default="2"/> 
 
   <!-- COLA2 architecture -->
   <group if="$(arg cola2_architecture)">
@@ -33,6 +33,26 @@
     </include>
     <include file="$(find cola2_sparus2)/launch/sim_start.launch" if="$(eval int(arg('number_of_robots')) >= 6)">
       <arg name="robot_name" value="sparus_5"/>
+      <arg name="enable_keyboard" value="true"/>
+    </include>
+    <include file="$(find cola2_sparus2)/launch/sim_start.launch" if="$(eval int(arg('number_of_robots')) >= 7)">
+      <arg name="robot_name" value="sparus_6"/>
+      <arg name="enable_keyboard" value="true"/>
+    </include>
+    <include file="$(find cola2_sparus2)/launch/sim_start.launch" if="$(eval int(arg('number_of_robots')) >= 8)">
+      <arg name="robot_name" value="sparus_7"/>
+      <arg name="enable_keyboard" value="true"/>
+    </include>
+    <include file="$(find cola2_sparus2)/launch/sim_start.launch" if="$(eval int(arg('number_of_robots')) >= 9)">
+      <arg name="robot_name" value="sparus_8"/>
+      <arg name="enable_keyboard" value="true"/>
+    </include>
+    <include file="$(find cola2_sparus2)/launch/sim_start.launch" if="$(eval int(arg('number_of_robots')) >= 10)">
+      <arg name="robot_name" value="sparus_9"/>
+      <arg name="enable_keyboard" value="true"/>
+    </include>
+    <include file="$(find cola2_sparus2)/launch/sim_start.launch" if="$(eval int(arg('number_of_robots')) >= 11)">
+      <arg name="robot_name" value="sparus_10"/>
       <arg name="enable_keyboard" value="true"/>
     </include>
     
@@ -73,6 +93,31 @@
       <node name="AUV_sparus_5" pkg="collision_avoidance" type="AUV_robot.py" output="screen" respawn="true" if="$(eval int(arg('number_of_robots')) >= 6)">
         <param name="robot_ID" value="5"/>
         <param name="robot_name" value="sparus_5"/>
+        <param name="navigation_depth" value="0"/>
+      </node>
+      <node name="AUV_sparus_6" pkg="collision_avoidance" type="AUV_robot.py" output="screen" respawn="true" if="$(eval int(arg('number_of_robots')) >= 7)">
+        <param name="robot_ID" value="6"/>
+        <param name="robot_name" value="sparus_6"/>
+        <param name="navigation_depth" value="0"/>
+      </node>
+      <node name="AUV_sparus_7" pkg="collision_avoidance" type="AUV_robot.py" output="screen" respawn="true" if="$(eval int(arg('number_of_robots')) >= 8)">
+        <param name="robot_ID" value="7"/>
+        <param name="robot_name" value="sparus_7"/>
+        <param name="navigation_depth" value="0"/>
+      </node>
+      <node name="AUV_sparus_8" pkg="collision_avoidance" type="AUV_robot.py" output="screen" respawn="true" if="$(eval int(arg('number_of_robots')) >= 9)">
+        <param name="robot_ID" value="8"/>
+        <param name="robot_name" value="sparus_8"/>
+        <param name="navigation_depth" value="0"/>
+      </node>
+      <node name="AUV_sparus_9" pkg="collision_avoidance" type="AUV_robot.py" output="screen" respawn="true" if="$(eval int(arg('number_of_robots')) >= 10)">
+        <param name="robot_ID" value="9"/>
+        <param name="robot_name" value="sparus_9"/>
+        <param name="navigation_depth" value="0"/>
+      </node>
+      <node name="AUV_sparus_10" pkg="collision_avoidance" type="AUV_robot.py" output="screen" respawn="true" if="$(eval int(arg('number_of_robots')) >= 11)">
+        <param name="robot_ID" value="10"/>
+        <param name="robot_name" value="sparus_10"/>
         <param name="navigation_depth" value="0"/>
       </node>
     </group>

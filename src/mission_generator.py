@@ -12,13 +12,13 @@ class GenerateMission:
         self.ned_origin_lon = self.get_param('ned_origin_lon',2.377940)
         self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  #NED frame
         self.area_of_exploration = self.get_param('area_of_exploration', 400)
-        self.mission_path = self.get_param('mission',"/home/pedro/catkin_ws/src/collision_avoidance/missions/mission_" + str(self.robot_ID) + ".xml")
-        self.dist_between_paths = self.get_param('distance_between_paths', 5.0)
-        self.side = math.sqrt(self.area_of_exploration)
-        self.cycle_coefficient = 1
-        self.east = 0
-        self.north = 0
-        self.last = 0
+        self.mission_path = self.get_param('mission_path',"/home/pedro/catkin_ws/src/collision_avoidance/missions/mission_" + str(self.robot_ID) + ".xml")
+        self.max_dist_between_paths = self.get_param('max_distance_between_paths', 5.0)
+        side = math.sqrt(self.area_of_exploration)
+        div_coefficient = 1
+        east = 0
+        north = 0
+        last = 0
 
         # Set the number of cycles needed to cover the height of the square of exploration knowing that a cycle is
         # formed by 2 movements, except the first and the last cycles, being only one movement each
@@ -26,53 +26,60 @@ class GenerateMission:
         if self.number_of_robots > 1:
             # Area of exploration of each AUV gets smaller in proportion to the total number of robots in the system
             if self.number_of_robots % 2 == 0:
-                self.cycle_coefficient = self.number_of_robots / 2
+                div_coefficient = self.number_of_robots / 2
             else:
                 if self.robot_ID % 2 != 0:
-                    self.cycle_coefficient = (self.number_of_robots - 1) / 2
+                    div_coefficient = (self.number_of_robots - 1) / 2
                 else:
-                    self.cycle_coefficient = (self.number_of_robots + 1) / 2
+                    div_coefficient = (self.number_of_robots + 1) / 2
     
         else:
-            self.cycle_coefficient = 1
+            div_coefficient = 1
+
+        counter = 0
+        vertical_dist = self.max_dist_between_paths + 1
+        while vertical_dist > self.max_dist_between_paths:
+            vertical_moves = 4 * counter / 2 + 1
+            vertical_dist = side / (div_coefficient * vertical_moves) # Number of movements needs to be divisible by 3 to cover the entire area
+            counter += 1
         
-        self.number_of_cycles = self.side / (2 * self.dist_between_paths * self.cycle_coefficient)
+        number_of_moves = 3 + 4*(counter - 1)
         
         # Set the initial point of each AUV depending on its ID
         if self.robot_ID % 2 != 0:
-            self.east = -self.side / 2             
+            east = -side / 2             
         else:
-            self.east = self.side / 2
+            east = side / 2
 
-        self.north = self.side * (self.cycle_coefficient - 2 * math.floor(self.robot_ID / 2)) / (2 * self.cycle_coefficient)
+        north = side * (div_coefficient - 2 * math.floor(self.robot_ID / 2)) / (2 * div_coefficient)
         
 
         missionElem = etree.Element("mission")
 
         doc = etree.ElementTree(missionElem)
 
-        number_of_moves = round(self.number_of_cycles * 4) + 1
-
-        if (self.robot_ID == self.number_of_robots - 1):
-            number_of_moves += 1
+        number_of_moves +=  1 # To go from origin to start
 
         for i in range(number_of_moves):
             rem = i % 4 # There are 4 types of movements: to the right, down from the right, to the left, down from the left
             if i != 0:
                 if rem == 1:
                     if self.robot_ID % 2 != 0:
-                        self.east += 5 * self.side / 8
+                        east += 5 * side / 8
                     else:
-                        self.east -= 5 * self.side / 8
+                        east -= 5 * side / 8
                 elif rem == 3:
                     if self.robot_ID % 2 != 0:
-                        self.east -= 5 * self.side / 8
+                        east -= 5 * side / 8
                     else:
-                        self.east += 5 * self.side / 8
+                        east += 5 * side / 8
                 else:
-                    self.north -= self.dist_between_paths
+                    north -= vertical_dist
+            
+            if i == number_of_moves - 1:
+                last = 1
 
-            lat, lon, _ = self.ned.ned2geodetic([self.east, self.north, 0.0])
+            lat, lon, _ = self.ned.ned2geodetic([east, north, 0.0])
 
             mission_stepElem = etree.SubElement(missionElem, "mission_step")
 
@@ -83,6 +90,9 @@ class GenerateMission:
 
             final_longitudeElem = etree.SubElement(maneuverElem,"final_longitude")
             final_longitudeElem.text = str(lon)
+
+            last_sectionElem = etree.SubElement(maneuverElem,"last_section")
+            last_sectionElem.text = str(0) #++++++++++++++++++++++++++++++++++++++++++++++++str(last)
 
         outFile = open(self.mission_path, "wb")
         doc.write(outFile, pretty_print=True, xml_declaration=True, encoding='utf-8')

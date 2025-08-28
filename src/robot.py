@@ -51,11 +51,11 @@ class Robot:
         self.robots_position = []
         self.robots_orientation = []
         self.obs_detect = []
-        self.collision_pos = []
         self.arrived = True
         self.first_section = True
         self.first_collision = True
         self.once = [True, True]
+        self.last = False
 
         # Initialize arrays
         for robot in range(self.number_of_robots):
@@ -74,20 +74,18 @@ class Robot:
 
             # Split danger zone depending on the number of robots             
             if self.number_of_robots > 2:
+
+                danger_zone_array = []
+                zones_num = math.ceil(self.number_of_robots/2)
+                
                 if (self.number_of_robots % 2 == 0):
-                    rel_robot_num = self.number_of_robots
                     index = math.floor((self.robot_ID) / 2)
                 else:
                     if (self.robot_ID % 2 != 0):
-                        rel_robot_num = self.number_of_robots - 1
+                        zones_num -= 1
                         index = (self.robot_ID - 1) / 2
                     else:
-                        rel_robot_num = self.number_of_robots + 1
                         index = self.robot_ID / 2
-
-
-                danger_zone_array = []
-                zones_num = math.ceil(rel_robot_num/2)
 
                 for i in range(zones_num - 1):
                     split_line = LineString([(-half_side, half_side - half_side*2*(i + 1)/zones_num), (half_side, half_side - half_side*2*(i + 1)/zones_num)])
@@ -138,7 +136,7 @@ class Robot:
 # ++++++++++++++++++++++++++AUXILIARY FUNCTIONS+++++++++++++++++++++++++++
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    def send_section_strategy(self,initial_point,final_point):
+    def send_section_strategy(self,initial_point,final_point, last):
 
         init_lat, init_lon = initial_point
         final_lat, final_lon = final_point
@@ -158,7 +156,9 @@ class Robot:
         # uint64 BOTH=2
 
         # If last section, null tolerance to force maintain position
-        self.section_req.tolerance_xy = self.tolerance
+        self.last = last
+        if not last: self.section_req.tolerance_xy = self.tolerance
+        else: self.section_req.tolerance_xy = 0
         self.section_req.surge_velocity = self.surge_velocity
         self.section_req.controller_type = 0
         # uint64 SECTION=0
@@ -203,17 +203,13 @@ class Robot:
                 self.obs_detect[robot] = True
             else: self.obs_detect[robot] = False
 
-        if any(self.obs_detect):
+        if any(self.obs_detect) or not self.arrived:
             self.arrived = False
-            if(self.first_collision):
-                self.collision_pos = self.robots_position[self.robot_ID]
+            if(self.first_collision and self.collision_algorithm == 'PF'):
                 print("++++++++++++++++++++++++SPARUS " + str(self.robot_ID) + ": " "CANCELLING GOALS++++++++++++++++++++++++")
                 self.section_strategy.cancel_goal()
-                self.first_collision = False
                 self.once = [True, True]
-            self.avoid_collision()
-        elif not self.arrived:
-            self.first_collision = True
+                self.first_collision = False
             self.avoid_collision()
 
     def avoid_collision(self):
@@ -236,23 +232,25 @@ class Robot:
                     section_req_aux = copy.copy(self.section_req)
 
                     section_req_aux.initial_latitude, section_req_aux.initial_longitude = self.ned2geodetic(init_pos)
-                    section_req_aux.final_latitude, section_req_aux.final_longitude = self.ned2geodetic(self.collision_pos)
+                    section_req_aux.final_latitude, section_req_aux.final_longitude = self.ned2geodetic(init_pos)
                     section_req_aux.tolerance_xy = 0
 
                     # Sends maintain position goal once
                     if self.once[0]:
                         print("++++++++++++++++++++++++SPARUS " + str(self.robot_ID) + ": KEEPING POSITION++++++++++++++++++++++++")
+                        self.section_strategy.cancel_goal()
                         self.section_strategy.send_goal(section_req_aux)
                         self.once[0] = False
+                        self.once[1] = True
 
                 elif not any(self.obs_detect):
                     if self.once[1]:
                         print("++++++++++++++++++++++++SPARUS " + str(self.robot_ID) + ": HEADED TO GOAL++++++++++++++++++++++++") 
                         self.section_strategy.cancel_goal()
-                        self.section_strategy.get_state()
                         self.section_req.initial_latitude, self.section_req.initial_longitude = self.ned2geodetic(init_pos)
                         self.section_strategy.send_goal(self.section_req)
                         self.once[1] = False
+                        self.once[0] = True
 
         elif (self.collision_algorithm == 'PF'):
 

@@ -4,24 +4,56 @@
     <maneuver type="section">
       <final_latitude>39.54323993089191</final_latitude>
       <final_longitude>2.377978777681613</final_longitude>
+      <last_section>0</last_section>
     </maneuver>
   </mission_step>
   <mission_step>
     <maneuver type="section">
       <final_latitude>39.54335251726553</final_latitude>
       <final_longitude>2.3779787777442722</final_longitude>
+      <last_section>0</last_section>
     </maneuver>
   </mission_step>
   <mission_step>
     <maneuver type="section">
-      <final_latitude>39.54335251727039</final_latitude>
-      <final_longitude>2.377920611127864</final_longitude>
+      <final_latitude>39.54335251727129</final_latitude>
+      <final_longitude>2.377952925914757</final_longitude>
+      <last_section>0</last_section>
     </maneuver>
   </mission_step>
   <mission_step>
     <maneuver type="section">
-      <final_latitude>39.54323993089676</final_latitude>
-      <final_longitude>2.377920611159193</final_longitude>
+      <final_latitude>39.543239930897656</final_latitude>
+      <final_longitude>2.377952925893871</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.543239930897656</final_latitude>
+      <final_longitude>2.377927074106129</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.543352517271295</final_latitude>
+      <final_longitude>2.3779270740852425</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54335251726554</final_latitude>
+      <final_longitude>2.3779012222557276</final_longitude>
+      <last_section>0</last_section>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <final_latitude>39.54323993089191</final_latitude>
+      <final_longitude>2.3779012223183864</final_longitude>
+      <last_section>0</last_section>
     </maneuver>
   </mission_step>
 </mission>

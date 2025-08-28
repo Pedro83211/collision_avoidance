@@ -3,20 +3,20 @@
 # ---------------------------------------------------------
 
 #TOTAL number of robots
-number_of_robots: 6
+number_of_robots: 2
 
 # NED origin definition
 ned_origin_lat: 39.543330
 ned_origin_lon: 2.377940
 
 # Area of the square of exploration (m^2)
-area_of_exploration: 400
+area_of_exploration: 1600
 
 # Collision avoidance algorithm to use: {stop&wait, PF}
 collision_algorithm: 'stop&wait'
 
 # Separation between each horizontal path of the exploration
-distance_between_paths: 5.0
+max_distance_between_paths: 5.0
 
 # Stop and wait parameters
 

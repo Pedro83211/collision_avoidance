@@ -62,30 +62,30 @@ for robot in range(number_of_robots):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # +++++++++++++++++++++++DANGER ZONE INITIALIZATION+++++++++++++++++++++++
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-if collision_algorithm == 'stop&wait':
-    half_side = math.sqrt(area_of_exploration)/2
-    danger_zone_coords = [[-half_side/coef,-half_side], [-half_side/coef,half_side], [half_side/coef,half_side], 
-                               [half_side/coef,-half_side], [-half_side/coef,-half_side]]
-    danger_polygon = Polygon(danger_zone_coords)
-    danger_zone = danger_polygon
+# if collision_algorithm == 'stop&wait':
+#     half_side = math.sqrt(area_of_exploration)/2
+#     danger_zone_coords = [[-half_side/coef,-half_side], [-half_side/coef,half_side], [half_side/coef,half_side], 
+#                                [half_side/coef,-half_side], [-half_side/coef,-half_side]]
+#     danger_polygon = Polygon(danger_zone_coords)
+#     danger_zone = danger_polygon
 
-# Split danger zone depending on the number of robots             
-if number_of_robots > 3:
-    zones_num = math.ceil(number_of_robots/2)
-    if(number_of_robots % 2 != 0):
-        if(robot_ID % 2 != 0):
-            zones_num -= 1
-        danger_zone_array = []
-        for i in range(number_of_robots):
-            split_line = LineString([(-half_side, half_side - half_side*2*(math.floor(i/2) + 1)/zones_num), 
-                                     (half_side, half_side - half_side*2*(math.floor(i/2) + 1)/zones_num)])
+# # Split danger zone depending on the number of robots             
+# if number_of_robots > 3:
+#     zones_num = math.ceil(number_of_robots/2)
+#     if(number_of_robots % 2 != 0):
+#         if(robot_ID % 2 != 0):
+#             zones_num -= 1
+#         danger_zone_array = []
+#         for i in range(number_of_robots):
+#             split_line = LineString([(-half_side, half_side - half_side*2*(math.floor(i/2) + 1)/zones_num), 
+#                                      (half_side, half_side - half_side*2*(math.floor(i/2) + 1)/zones_num)])
             
-            try:
-                danger_zone_array.append(split(danger_polygon, split_line).geoms[1])
-                danger_polygon = split(danger_polygon, split_line).geoms[0]
-            except:
-                danger_zone_array.append(split(danger_polygon, split_line).geoms[0])
-            if(robot_ID - 1 == number_of_robots):
-                danger_zone = Polygon(danger_zone_array[-1]).buffer(tolerance, join_style=2)
-                break
-        print(danger_zone)
+#             try:
+#                 danger_zone_array.append(split(danger_polygon, split_line).geoms[1])
+#                 danger_polygon = split(danger_polygon, split_line).geoms[0]
+#             except:
+#                 danger_zone_array.append(split(danger_polygon, split_line).geoms[0])
+#             if(robot_ID - 1 == number_of_robots):
+#                 danger_zone = Polygon(danger_zone_array[-1]).buffer(tolerance, join_style=2)
+#                 break
+#         print(danger_zone)
